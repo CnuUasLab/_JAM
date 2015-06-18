@@ -1,3 +1,5 @@
+var production 				= false;
+
 var http 					= require('http');
 
 // mavlink stuff
@@ -7,7 +9,6 @@ var mavlink 				= new Mavlink(0, 0);
 
 var username 				= 'newport-falcon';
 var password 				= '3813418169';
-var loginQuery 				= 'username=' + username + '&password=' + password; 
 
 var auvsi_suas_host 		= '10.10.130.10';
 var auvsi_suas_port 		= 80;
@@ -16,6 +17,17 @@ var mavlink_host 			= 'localhost';
 var mavlink_port 			= 9550;
 
 var auvsi_suas_auth_cookie 	= null
+
+if(!production) {
+
+	username = 'test';
+	password = 'test';
+	auvsi_suas_host = 'localhost';
+	auvsi_suas_port = 8080;
+
+}
+
+var loginQuery 				= 'username=' + username + '&password=' + password; 
 
 // mavlink listener
 mavlink.on('ready', function() {
@@ -89,17 +101,13 @@ loginAction.on('response', function(response) {
 	});
 
 	response.on('end', function() {
-		console.log(responseData);
+
 		// check response status (200 ok)
 		if(responseData == 'Login Successful.') {
 
-			console.log('AUTH successful, auth cookie = ');
-
 			// save cookie
 			auvsi_suas_auth_cookie = response.headers['set-cookie'][0];
-			// getServerData(auvsi_suas_auth_cookie);
-
-			console.log(auvsi_suas_auth_cookie);
+			getServerData(auvsi_suas_auth_cookie);
 
 		}
 
@@ -110,9 +118,6 @@ loginAction.on('response', function(response) {
 loginAction.on('error', function(error) {
 	console.log('ERROR>authentication failure> ' + error.toString());
 });
-
-loginAction.write('username=test&password=test');
-loginAction.end();
 
 // retrieve server time, etc...
 function getServerData(authCookie) {
