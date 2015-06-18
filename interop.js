@@ -130,7 +130,7 @@ function getServerData(authCookie) {
 		host: auvsi_suas_host,
 		port: auvsi_suas_port,
 		headers: {
-			'Set-Cookie': authCookie.split(';')[0]
+			'Cookie': authCookie
 		}
 	});
 
@@ -144,14 +144,11 @@ function getServerData(authCookie) {
 
 		response.on('end', function() {
 
+			console.log('----------- Server Data [Interop Task 1] ----------');
+			console.log('');
 			console.log(responseData);
-			// var data = JSON.parse(responseData);
-
-			// // check response status (200 ok)
-			// if(data.status == 200) {
-			// 	console.log('RunOnce> Successfully received server data:');
-			// 	console.log(responseData);
-			// }
+			console.log('');
+			console.log('---------- /Server Data [Interop Task 1]/ ---------');
 
 		});
 
