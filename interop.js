@@ -1,7 +1,9 @@
 var production 					= false;
 	
 var http 						= require('http');
-	
+var io 							= require('socket.io');
+var fs 							= require('fs');
+
 // mavlink stuff	
 var socket 						= require('dgram').createSocket('udp4');
 var Mavlink 					= require('mavlink');
@@ -22,6 +24,11 @@ var previous_mavlink_time_boot 	= 0;
 var mavlink_time_boot 			= 0;
 
 var received_mavlink_message 	= false;
+
+var server_data = null;
+
+// socket.io shit
+var socket_io_clients = {};
 
 // contain waypoint data
 var mavlink_message_post_data = { 
@@ -87,6 +94,11 @@ mavlink.on('ready', function() {
 
 		if(!received_mavlink_message) {
 			received_mavlink_message = true;
+		}
+
+		// send mavlink event to all socket.io clients
+		for(var i in socket_io_clients) {
+			socket_io_clients[i].emit('mavlink', mavlink_message_post_data);
 		}
 		
 	});
@@ -175,6 +187,20 @@ function getServerData(authCookie) {
 			console.log('');
 			console.log('---------- /Server Data [Interop Task 1]/ ---------');
 			console.log('');
+
+			// advertise server info to browser
+			try {
+
+				var server_time;
+
+				server_data = JSON.parse(responseData);
+				server_time = server_data['server_time'];
+				server_data = server_data['server_info'];
+				server_data['server_time'] = server_time;
+
+			} catch(e) {
+				console.log(e);
+			}
 
 		});
 
@@ -306,4 +332,38 @@ function beginPostingTelemetry(authCookie) {
 
 	}, 100);
 
-} 
+}
+
+// create server for web pages
+var server = http.createServer(function(request, response) {
+
+	if(request.url == '/' || request.url == '/index.html') {
+		fs.readFile(__dirname + '/index.html', function(err, data) {
+
+			if(err) {
+				response.writeHead(404);
+				return response.end('404. File not found.');
+			}
+
+			response.writeHead(200, { 'Content-Type': 'text/html' });
+			response.end(data);
+
+		});
+	} else {
+		response.end('404. File not found.');
+	}
+
+});
+
+server.listen(8000, '0.0.0.0');
+
+io.listen(server).on('connection', function(client) {
+
+	console.log('socket.io> client has connected');
+	socket_io_clients[client.id] = client;
+
+	if(server_data) {
+		client.emit('server_info', server_data);
+	}
+
+});

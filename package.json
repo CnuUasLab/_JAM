@@ -4,11 +4,12 @@
   "description": "Probably should have added package.json earlier",
   "main": "interop.js",
   "dependencies": {
-    "mavlink": "~1.0.1"
+    "mavlink": "~1.0.1",
+    "socket.io": "~1.3.5"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "tes"
+    "test": "test"
   },
   "keywords": [
     "interop"
