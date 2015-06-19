@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+<meta charset="utf-8"/>
+<title>Interoperability Software</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,300,700,600);
+@import url(http://fonts.googleapis.com/css?family=EB+Garamond);
+
+body {
+	background: rgb(4,13,20);
+	color: rgb(169,225,250);
+	font-family: 'Open Sans';
+}
+
+#wrapper {
+
+	background: transparent;
+	/*font-family: 'EB Garamond';*/
+	font-size: 4em;
+	min-height: 100px;
+	margin: 10% auto 0 auto;
+	text-align: center;
+	width: 500px;
+
+}
+	#server-wrapper {
+
+		display: block;
+
+	}
+		#server-time {
+			display: block;
+		}
+
+		#server-message {
+
+			color: #006b98;
+			display: block;
+			font-size: 0.8em;
+			font-weight: 300;
+			text-align: center;
+
+		}
+
+		#server-message-timestamp {
+			display: block;
+			font-size: 0.3em;
+			font-weight: 300;
+			text-align: center;
+		}
+
+		#waypoint-wrapper {
+
+			display: block;
+			font-size: 1em;
+			text-align: center;
+
+		}
+			#waypoint-wrapper ul {
+
+				display: inline-block;
+				font-weight: 300;
+				list-style: none;
+				margin: 30px 10px 0 10px;
+				padding: 0;
+			}
+				#waypoint-wrapper ul li span.bright {
+					color: #006b98;
+				}
+
+
+</style>
+</head>
+<body>
+
+<div id="wrapper">
+	<div id="server-wrapper">
+		<div id="server-time">0000-00-00 00:00:00.000000</div><!-- #server-time -->
+		<div id="server-message">Loading...</div><!-- #server-message -->
+		<div id="server-message-timestamp">Loading, please wait...</div><!-- #server-message-timestamp -->
+		<div id="waypoint-wrapper">
+			<ul>
+				<li><span class="bright">Lat</span> <span id="lat">0</span></li>
+				<li><span class="bright">Alt</span> <span id="alt">0</span></li>
+			</ul>
+			<ul>
+				<li><span class="bright">Lon</span> <span id="lon">0</span></li>
+				<li><span class="bright">Hdg</span> <span id="hdg">0</span></li>
+			</ul>
+		</div><!-- #waypoint-wrapper -->
+	</div><!-- #server-wrapper -->
+</div><!-- #wrapper -->
+
+<script>
+
+	var lat = document.getElementById('lat');
+	var lon = document.getElementById('lon');
+	var hdg = document.getElementById('hdg');
+	var alt = document.getElementById('alt');
+
+	var st 	= document.getElementById('server-time');
+	var sm 	= document.getElementById('server-message');
+	var smt = document.getElementById('server-message-timestamp');
+
+	var socket = io.connect(window.location.href);
+
+	socket.on('mavlink', function(data) {
+		
+		lat.innerHTML = parseInt(data.latitude);
+		lon.innerHTML = parseInt(data.longitude);
+		hdg.innerHTML = parseInt(data.uas_heading);
+		alt.innerHTML = parseInt(data.altitude_msl);
+
+	});
+
+	socket.on('server_info', function(data) {
+
+		st.innerHTML = data.server_time;
+		sm.innerHTML = data.message;
+		smt.innerHTML = data.message_timestamp;
+
+	});
+
+	socket.on('obstacle_data', function(data) {
+		console.log(data);
+	});
+
+</script>
+</body>
+</html>
