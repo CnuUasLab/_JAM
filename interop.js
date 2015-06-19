@@ -26,6 +26,7 @@ var mavlink_time_boot 			= 0;
 var received_mavlink_message 	= false;
 
 var server_data = null;
+var obstacle_data = null;
 
 // socket.io shit
 var socket_io_clients = {};
@@ -89,6 +90,31 @@ mavlink.on('ready', function() {
 		mavlink_message_post_data.longitude 	= fields['lon'] / (Math.pow(10, 7));
 		mavlink_message_post_data.altitude_msl 	= fields['alt'] * '0.00328084';
 		mavlink_message_post_data.uas_heading 	= fields['hdg'] / 100;
+
+		// check for appropriate telemetry values
+		if(mavlink_message_post_data.latitude > 90) {
+			mavlink_message_post_data.latitude = 90;
+		}
+
+		if(mavlink_message_post_data.latitude < -90) {
+			mavlink_message_post_data.latitude = -90;
+		}
+
+		if(mavlink_message_post_data.longitude > 180) {
+			mavlink_message_post_data.longitude = 180;
+		}
+
+		if(mavlink_message_post_data.longitude < -180) {
+			mavlink_message_post_data.longitude = -180;
+		}
+
+		if(mavlink_message_post_data.uas_heading > 360) {
+			mavlink_message_post_data.uas_heading = 360;
+		}
+
+		if(mavlink_message_post_data.uas_heading < 0) {
+			mavlink_message_post_data.uas_heading = 0;
+		}
 
 		// console.log('MAVLink> Mavlink message received (type: GPS_RAW_INIT)');
 
@@ -244,6 +270,13 @@ function getObstacleInformation(authCookie) {
 			console.log('---------- /Obstacle Data [Interop Task 2]/ ---------');
 			console.log('');
 
+			// advertise obstacle data to browser
+			try {
+				obstacle_data = JSON.parse(responseData);
+			} catch(e) {
+				console.log(e);
+			}
+
 		});
 
 	});
@@ -364,6 +397,10 @@ io.listen(server).on('connection', function(client) {
 
 	if(server_data) {
 		client.emit('server_info', server_data);
+	}
+
+	if(obstacle_data) {
+		client.emit('obstacle_data', obstacle_data);
 	}
 
 });
