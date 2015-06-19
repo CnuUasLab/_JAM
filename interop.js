@@ -187,56 +187,66 @@ loginAction.on('error', function(error) {
 // retrieve server time, etc...
 function getServerData(authCookie) {
 
-	var request = http.request({
-		method: 'GET',
-		path: '/api/interop/server_info',
-		host: auvsi_suas_host,
-		port: auvsi_suas_port,
-		headers: {
-			'Cookie': authCookie
-		}
-	});
+	var server_data_timeout = setTimeout(function sdt() {
 
-	request.on('response', function(response) {
-
-		var responseData = '';
-
-		response.on('data', function(chunk) {
-			responseData += chunk;
-		});
-
-		response.on('end', function() {
-
-			console.log('----------- Server Data [Interop Task 1] ----------');
-			console.log('');
-			console.log(responseData);
-			console.log('');
-			console.log('---------- /Server Data [Interop Task 1]/ ---------');
-			console.log('');
-
-			// advertise server info to browser
-			try {
-
-				var server_time;
-
-				server_data = JSON.parse(responseData);
-				server_time = server_data['server_time'];
-				server_data = server_data['server_info'];
-				server_data['server_time'] = server_time;
-
-			} catch(e) {
-				console.log(e);
+		var request = http.request({
+			method: 'GET',
+			path: '/api/interop/server_info',
+			host: auvsi_suas_host,
+			port: auvsi_suas_port,
+			headers: {
+				'Cookie': authCookie
 			}
+		});
+
+		request.on('response', function(response) {
+
+			var responseData = '';
+
+			response.on('data', function(chunk) {
+				responseData += chunk;
+			});
+
+			response.on('end', function() {
+
+				console.log('----------- Server Data [Interop Task 1] ----------');
+				console.log('');
+				console.log(responseData);
+				console.log('');
+				console.log('---------- /Server Data [Interop Task 1]/ ---------');
+				console.log('');
+
+				// advertise server info to browser
+				try {
+
+					var server_time;
+
+					server_data = JSON.parse(responseData);
+					server_time = server_data['server_time'];
+					server_data = server_data['server_info'];
+					server_data['server_time'] = server_time;
+
+					for(var i in socket_io_clients) {
+						socket_io_clients[i].emit('server_info', server_data);
+					}
+
+				} catch(e) {
+					console.log(e);
+				}
+
+			});
 
 		});
 
-	});
+		request.on('error', function(error) {
+			console.log('ERROR>getServerData() failure> ' + error.toString());
+		});
 
-	request.on('error', function(error) {
-		console.log('ERROR>getServerData() failure> ' + error.toString());
-	});
+		request.end();
 
-	request.end();
+		setTimeout(sdt, 1000);
+
+	}, 100);
 
 }
 
@@ -402,5 +412,9 @@ io.listen(server).on('connection', function(client) {
 	if(obstacle_data) {
 		client.emit('obstacle_data', obstacle_data);
 	}
+
+	client.on('disconnect', function() {
+		delete socket_io_clients[client.id];
+	});
 
 });
