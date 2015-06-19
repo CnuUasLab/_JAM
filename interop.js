@@ -244,7 +244,8 @@ function getServerData(authCookie) {
 
 		request.end();
 
-		setTimeout(sdt, 1000);
+		clearTimeout(server_data_timeout);
+		var server_data_timeout = setTimeout(sdt, 1000);
 
 	}, 100);
 
@@ -253,49 +254,62 @@ function getServerData(authCookie) {
 // get obstacle data
 function getObstacleInformation(authCookie) {
 
-	var request = http.request({
-		method: 'GET',
-		path: '/api/interop/obstacles',
-		host: auvsi_suas_host,
-		port: auvsi_suas_port,
-		headers: {
-			'Cookie': authCookie
-		}
-	});
+	var obstacle_data_timeout = setTimeout(function odt() {
 
-	request.on('response', function(response) {
-
-		var responseData = '';
-
-		response.on('data', function(chunk) {
-			responseData += chunk;
-		});
-
-		response.on('end', function() {
-
-			console.log('----------- Obstacle Data [Interop Task 2] ----------');
-			console.log('');
-			console.log(responseData);
-			console.log('');
-			console.log('---------- /Obstacle Data [Interop Task 2]/ ---------');
-			console.log('');
-
-			// advertise obstacle data to browser
-			try {
-				obstacle_data = JSON.parse(responseData);
-			} catch(e) {
-				console.log(e);
+		var request = http.request({
+			method: 'GET',
+			path: '/api/interop/obstacles',
+			host: auvsi_suas_host,
+			port: auvsi_suas_port,
+			headers: {
+				'Cookie': authCookie
 			}
+		});
+
+		request.on('response', function(response) {
+
+			var responseData = '';
+
+			response.on('data', function(chunk) {
+				responseData += chunk;
+			});
+
+			response.on('end', function() {
+
+				console.log('----------- Obstacle Data [Interop Task 2] ----------');
+				console.log('');
+				console.log(responseData);
+				console.log('');
+				console.log('---------- /Obstacle Data [Interop Task 2]/ ---------');
+				console.log('');
+
+				// advertise obstacle data to browser
+				try {
+
+					obstacle_data = JSON.parse(responseData);
+
+					for(var i in socket_io_clients) {
+						socket_io_clients[i].emit('obstacle_data', obstacle_data);
+					}
+
+				} catch(e) {
+					console.log(e);
+				}
+
+			});
 
 		});
 
-	});
+		request.on('error', function(error) {
+			console.log('ERROR>getObstacleInformation() failure> ' + error.toString());
+		});
 
-	request.on('error', function(error) {
-		console.log('ERROR>getObstacleInformation() failure> ' + error.toString());
-	});
+		request.end();
 
-	request.end();
+		clearTimeout(obstacle_data_timeout);
+		obstacle_data_timeout = setTimeout(odt, 1000);
+
+	}, 100);
 
 }
 
