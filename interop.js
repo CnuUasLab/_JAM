@@ -13,12 +13,15 @@ var password 					= '3813418169';
 var auvsi_suas_host 			= '10.10.130.10';
 var auvsi_suas_port 			= 80;
 	
-var mavlink_host 				= 'localhost';
-var mavlink_port 				= 9550;
+var mavlink_host 				= '0.0.0.0';
+var mavlink_port 				= 14552;
 	
 var auvsi_suas_auth_cookie 		= null;
 
-var received_mavlink_message 	= true;
+var previous_mavlink_time_boot 	= 0;
+var mavlink_time_boot 			= 0;
+
+var received_mavlink_message 	= false;
 
 // contain waypoint data
 var mavlink_message_post_data = { 
@@ -43,22 +46,22 @@ var loginQuery = 'username=' + username + '&password=' + password;
 // mavlink listener
 mavlink.on('ready', function() {
 
-	console.log('Mavlink listener ready');
+	console.log('Mavlink> listener ready');
 
 	socket.on('message', function(message, rinfo) {
 		mavlink.parse(message);
 	});
 
 	socket.bind(mavlink_port, mavlink_host, function() {
-		console.log('Socket bound to port ' + mavlink_port);
+		console.log('Mavlink> socket bound to port ' + mavlink_port);
 	});
 
 	socket.on('listening', function() {
-		console.log('Socket listening for data @ ' + socket.address().address);
+		console.log('Mavlink> socket listening for data @ ' + socket.address().address);
 	});
 
 	socket.on('close', function() {
-		console.log('conection closed');
+		console.log('Mavlink> socket conection closed');
 	});
 
 	socket.on('error', function(error) {
@@ -70,9 +73,17 @@ mavlink.on('ready', function() {
 	/**
 	 * Listen for a decoded message
 	 */
-	mavlink.on('GPS_RAW_INT', function(message, fields) {
+	mavlink.on('GLOBAL_POSITION_INT', function(message, fields) {
 
-		console.log('MAVLink> Mavlink message received (type: GPS_RAW_INIT)');
+		// update mavlink_message_post_data
+
+		mavlink_time_boot						= fields['time_boot_ms'];
+		mavlink_message_post_data.latitude 		= fields['lat'] / (Math.pow(10, 7));
+		mavlink_message_post_data.longitude 	= fields['lon'] / (Math.pow(10, 7));
+		mavlink_message_post_data.altitude_msl 	= fields['alt'] * '0.00328084';
+		mavlink_message_post_data.uas_heading 	= fields['hdg'] / 100;
+
+		// console.log('MAVLink> Mavlink message received (type: GPS_RAW_INIT)');
 
 		if(!received_mavlink_message) {
 			received_mavlink_message = true;
@@ -81,7 +92,7 @@ mavlink.on('ready', function() {
 	});
 
 	mavlink.on('message', function(message, fields) {
-		console.log('received mavlink message');
+		// console.log('received mavlink message');
 	});
 
 });
@@ -222,68 +233,77 @@ function getObstacleInformation(authCookie) {
 // post waypoints received from round station
 function beginPostingTelemetry(authCookie) {
 
+			
 	// holds our loop object
 	var task = null;
 	var query = 'latitude=' + mavlink_message_post_data.latitude + '&longitude=' + mavlink_message_post_data.longitude + '&altitude_msl=' + mavlink_message_post_data.altitude_msl + '&uas_heading=' + mavlink_message_post_data.uas_heading;
-
-	// establish http connection to the auvsi uas server
-	var request = http.request({
-		method: 'POST',
-		path: '/api/interop/uas_telemetry',
-		host: auvsi_suas_host,
-		port: auvsi_suas_port,
-		headers: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'Content-Length': query.length,
-			'Cookie': authCookie
-		}
-	});
-
-	request.on('response', function(response) {
-
-		var data = '';
-
-		response.on('data', function(chunk) {
-			data += chunk;
-		});
-
-		response.on('end', function() {
-
-			if(data == 'UAS Telemetry Successfully Posted.') {
-				console.log('Initializing post_telemetry loop @ 10Hz');
-				console.log('---------------------------------------');
-				console.log('');
-				post_telemetry();
-			}
-
-		});
-
-	});
-
-	request.on('error', function(error) {
-		console.log('ERROR>post_telemetry() failure> ' + error.toString());
-	});
-
-	request.write(query);
+	var post_telemetry_called = false;
 
 	// loop request every 100ms
-	function post_telemetry() {
+	setTimeout(function post_telemetry() {
+		
+		// update query
+		query = 'latitude=' + mavlink_message_post_data.latitude + '&longitude=' + mavlink_message_post_data.longitude + '&altitude_msl=' + mavlink_message_post_data.altitude_msl + '&uas_heading=' + mavlink_message_post_data.uas_heading;
 
-		// check to see if we've received at least one mavlink message
-		if(!received_mavlink_message) {
-			console.log('WARN>post_telemetry()> No mavlink messages have been received');
+		if(received_mavlink_message) {
+
+			// establish http connection to the auvsi uas server
+			var request = http.request({
+				method: 'POST',
+				path: '/api/interop/uas_telemetry',
+				host: auvsi_suas_host,
+				port: auvsi_suas_port,
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					'Content-Length': query.length,
+					'Cookie': authCookie
+				}
+			});
+
+			request.on('response', function(response) {
+
+				var data = '';
+
+				response.on('data', function(chunk) {
+					data += chunk;
+				});
+
+				response.on('end', function() {
+
+					if(data == 'UAS Telemetry Successfully Posted.') {
+
+						if(previous_mavlink_time_boot == mavlink_time_boot) {
+							console.log('No new telemetry received. Posting previously received telemetry.');
+						} else {
+							console.log('Successfully posted updated telemetry.');
+						}
+
+						previous_mavlink_time_boot = mavlink_time_boot;
+
+						console.log('');
+
+					} else {
+						console.log('ERR>post_telemetry() failure> ' + data);
+					}
+
+				});
+
+			});
+
+			request.on('error', function(error) {
+				console.log('ERROR>post_telemetry() failure> ' + error.toString());
+			});
+
+			console.log('post_telemetry()> Posting telemetry()');
+			request.end(query);
+
 		} else {
-
-			// update query
-			query = 'latitude=' + mavlink_message_post_data.latitude + '&longitude=' + mavlink_message_post_data.longitude + '&altitude_msl=' + mavlink_message_post_data.altitude_msl + '&uas_heading=' + mavlink_message_post_data.uas_heading;
-
-			console.log('UAS_TELEMETRY> posting telemetry to auvsi...');
-			request.write(query);
+			console.log('WARN>post_telemetry()> No mavlink data has been received, posting blank data.');
 		}
 
 		clearTimeout(task);
 		task = setTimeout(post_telemetry, 100);
 
-	}
+	}, 100);
 
 } 
