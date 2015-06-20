@@ -1,4 +1,18 @@
-var production 					= false;
+/**
+ * Interoperability script. Authenticates with auvsi server
+ * listens for mavlink packets through udp4 socket
+ * posts groundstation telemetry to auvsi server ten times per
+ * second. GETs auvsi server time every second. Gets SDA
+ * obstacle information from auvsi server every second, converts
+ * obstacle information into mavlink waypoints and reuses the 
+ * same udp socket used for receiving telemetry to send auvsi
+ * server obstacle information to mavproxy groundstation.
+ *
+ * @author juanvallejo
+ * @date 6/20/15
+ */
+
+var production 					= true;
 	
 var http 						= require('http');
 var io 							= require('socket.io');
@@ -39,7 +53,6 @@ var mavlink_message_post_data = {
 	uas_heading: '0'
 };
 
-//
 if(!production) {
 
 	username = 'test';
