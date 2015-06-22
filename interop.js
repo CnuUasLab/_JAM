@@ -15,8 +15,13 @@
  * @date 6/20/15
  */
 
-var production 					= false;
-	
+// configuration
+var config = {
+	application: {},
+	auvsi: {},
+	mavlink: {}
+};
+
 var http 						= require('http');
 var io 							= require('socket.io');
 var fs 							= require('fs');
@@ -25,16 +30,9 @@ var fs 							= require('fs');
 var socket 						= require('dgram').createSocket('udp4');
 var Mavlink 					= require('mavlink');
 var mavlink 					= new Mavlink(0, 0);
-	
-var username 					= 'newport-falcon';
-var password 					= '3813418169';
-	
-var auvsi_suas_host 			= '10.10.130.10';
-var auvsi_suas_port 			= 80;
-	
-var mavlink_host 				= '0.0.0.0';
-var mavlink_port 				= 14552;
-	
+
+var mavlink_isReady 			= false;
+		
 var auvsi_suas_auth_cookie 		= null;
 
 var previous_mavlink_time_boot 	= 0;
@@ -45,7 +43,10 @@ var received_mavlink_message 	= false;
 var server_data = null;
 var obstacle_data = null;
 
-// socket.io shit
+// callbacks
+callbacks_mavlink_onready = [];
+
+// socket.io
 var socket_io_clients = {};
 
 // contain waypoint data
@@ -56,84 +57,151 @@ var mavlink_message_post_data = {
 	uas_heading: '0'
 };
 
-// load local auvsi default settings
-// if not in production
-if(!production) {
+// mavlink finishes loading definitions
+mavlink.on('ready', function() {
 
-	username = 'test';
-	password = 'test';
-	auvsi_suas_host = 'localhost';
-	auvsi_suas_port = 8080;
+	mavlink_isReady = true;
+
+	for(var i = 0; i < callbacks_mavlink_onready.length; i++) {
+		callbacks_mavlink_onready[i].call(mavlink);
+	}
+
+});
+
+// init application by reading config file
+read_config_file('./config.json', function() {
+
+	// load local auvsi default settings
+	// if not in production
+	if(!config.application.in_production) {
+
+		config.auvsi.username 	= 'test';
+		config.auvsi.password 	= 'test';
+		config.auvsi.host 		= 'localhost';
+		config.auvsi.port 		= 8080;
+
+	}
+
+	mav_do_init();
+
+});
+
+/**
+ * parse config file
+ */
+function read_config_file(filepath, callback) {
+
+	fs.readFile(filepath, function(err, data) {
+
+		if(err) {
+			return log('ERR config> Config file not read -> ' + err.toString());
+		}
+
+		try {
+
+			var contents = JSON.parse(data);
+
+			for(var i in contents.application) {
+				config.application[i] = contents.application[i];
+			}
+
+			for(var i in contents.auvsi) {
+				config.auvsi[i] = contents.auvsi[i];
+			}
+
+			for(var i in contents.mavlink) {
+				config.mavlink[i] = contents.mavlink[i];
+			}
+
+			callback.call(config);
+
+		} catch(err) {
+			console.log('ERR config> Invalid config file syntax -> ' + err.toString());
+		}
+
+	});
 
 }
 
-// mavlink listener
-mavlink.on('ready', function() {
+/**
+ * Start mavlink event listeners
+ */
+function mav_do_init() {
 
-	log('mavlink> ready.');
+	// determine if mavlink ready event has already been fired
+	if(mavlink_isReady) {
+		mavlink_init_listeners();
+	} else {
+		callbacks_mavlink_onready.push(mavlink_init_listeners);
+	}
 
-	// bind udp socket between computer and
-	// groundstation and begin communications
-	// with auvsi server
-	bind_udp_socket(function() {
-		auvsi_do_auth();
-	});
+	function mavlink_init_listeners() {
 
-	/**
-	 * Listen for a decoded message
-	 */
-	mavlink.on('GLOBAL_POSITION_INT', function(message, fields) {
+		log('mavlink> ready.');
 
-		// update mavlink_message_post_data
+		// bind udp socket between computer and
+		// groundstation and begin communications
+		// with auvsi server
+		bind_udp_socket(function() {
+			auvsi_do_auth();
+		});
 
-		mavlink_time_boot						= fields['time_boot_ms'];
-		mavlink_message_post_data.latitude 		= fields['lat'] / (Math.pow(10, 7));
-		mavlink_message_post_data.longitude 	= fields['lon'] / (Math.pow(10, 7));
-		mavlink_message_post_data.altitude_msl 	= fields['alt'] * '0.00328084';
-		mavlink_message_post_data.uas_heading 	= fields['hdg'] / 100;
+		/**
+		 * Listen for a decoded message
+		 */
+		mavlink.on('GLOBAL_POSITION_INT', function(message, fields) {
 
-		// check for appropriate telemetry values
-		if(mavlink_message_post_data.latitude > 90) {
-			mavlink_message_post_data.latitude = 90;
-		}
+			// update mavlink_message_post_data
 
-		if(mavlink_message_post_data.latitude < -90) {
-			mavlink_message_post_data.latitude = -90;
-		}
+			mavlink_time_boot						= fields['time_boot_ms'];
+			mavlink_message_post_data.latitude 		= fields['lat'] / (Math.pow(10, 7));
+			mavlink_message_post_data.longitude 	= fields['lon'] / (Math.pow(10, 7));
+			mavlink_message_post_data.altitude_msl 	= fields['alt'] * '0.00328084';
+			mavlink_message_post_data.uas_heading 	= fields['hdg'] / 100;
 
-		if(mavlink_message_post_data.longitude > 180) {
-			mavlink_message_post_data.longitude = 180;
-		}
+			// check for appropriate telemetry values
+			if(mavlink_message_post_data.latitude > 90) {
+				mavlink_message_post_data.latitude = 90;
+			}
 
-		if(mavlink_message_post_data.longitude < -180) {
-			mavlink_message_post_data.longitude = -180;
-		}
+			if(mavlink_message_post_data.latitude < -90) {
+				mavlink_message_post_data.latitude = -90;
+			}
 
-		if(mavlink_message_post_data.uas_heading > 360) {
-			mavlink_message_post_data.uas_heading = 360;
-		}
+			if(mavlink_message_post_data.longitude > 180) {
+				mavlink_message_post_data.longitude = 180;
+			}
 
-		if(mavlink_message_post_data.uas_heading < 0) {
-			mavlink_message_post_data.uas_heading = 0;
-		}
+			if(mavlink_message_post_data.longitude < -180) {
+				mavlink_message_post_data.longitude = -180;
+			}
 
-		if(!received_mavlink_message) {
-			received_mavlink_message = true;
-		}
+			if(mavlink_message_post_data.uas_heading > 360) {
+				mavlink_message_post_data.uas_heading = 360;
+			}
 
-		// send mavlink event to all socket.io clients
-		for(var i in socket_io_clients) {
-			socket_io_clients[i].emit('mavlink', mavlink_message_post_data);
-		}
-		
-	});
+			if(mavlink_message_post_data.uas_heading < 0) {
+				mavlink_message_post_data.uas_heading = 0;
+			}
 
-});
+			if(!received_mavlink_message) {
+				received_mavlink_message = true;
+			}
+
+			// send mavlink event to all socket.io clients
+			for(var i in socket_io_clients) {
+				socket_io_clients[i].emit('mavlink', mavlink_message_post_data);
+			}
+			
+		});
+
+	}
+}
 
 
 function bind_udp_socket(callback) {
 
-	socket.bind(mavlink_port, mavlink_host, function() {
+	socket.bind(config.mavlink.port, config.mavlink.host, function() {
 		log('udp_socket> Socket connection established.');
 	});
 
@@ -141,7 +209,7 @@ function bind_udp_socket(callback) {
 	// call our callback function and continue
 	// the program's execution
 	socket.on('listening', function() {
-		log('udp_socket> Listening on port ' + mavlink_port);
+		log('udp_socket> Listening on port ' + config.mavlink.port);
 		callback.call(socket);
 	});
 
@@ -164,13 +232,13 @@ function bind_udp_socket(callback) {
  */
 function auvsi_do_auth() {
 
-	var query = 'username=' + username + '&password=' + password;
+	var query = 'username=' + config.auvsi.username + '&password=' + config.auvsi.password;
 
 	var request = http.request({
 		method: 'POST',
 		path: '/api/login',
-		host: auvsi_suas_host,
-		port: auvsi_suas_port,
+		host: config.auvsi.host,
+		port: config.auvsi.port,
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
 			'Content-Length': query.length
@@ -240,8 +308,8 @@ function auvsi_get_info(cookie) {
 		var request = http.request({
 			method: 'GET',
 			path: '/api/interop/server_info',
-			host: auvsi_suas_host,
-			port: auvsi_suas_port,
+			host: config.auvsi.host,
+			port: config.auvsi.port,
 			headers: {
 				'Cookie': cookie
 			}
@@ -294,8 +362,8 @@ function auvsi_get_obstacles(cookie) {
 		var request = http.request({
 			method: 'GET',
 			path: '/api/interop/obstacles',
-			host: auvsi_suas_host,
-			port: auvsi_suas_port,
+			host: config.auvsi.host,
+			port: config.auvsi.port,
 			headers: {
 				'Cookie': cookie
 			}
@@ -361,8 +429,8 @@ function auvsi_post_telemetry(cookie) {
 			var request = http.request({
 				method: 'POST',
 				path: '/api/interop/uas_telemetry',
-				host: auvsi_suas_host,
-				port: auvsi_suas_port,
+				host: config.auvsi.host,
+				port: config.auvsi.port,
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
 					'Content-Length': query.length,
