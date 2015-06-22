@@ -134,19 +134,19 @@ mavlink.on('ready', function() {
 function bind_udp_socket(callback) {
 
 	socket.bind(mavlink_port, mavlink_host, function() {
-		log('udp_socket> socket connection established.');
+		log('udp_socket> Socket connection established.');
 	});
 
 	// once socket is listening on the port
 	// call our callback function and continue
 	// the program's execution
 	socket.on('listening', function() {
-		log('udp_socket> listening on port ' + mavlink_port);
+		log('udp_socket> Listening on port ' + mavlink_port);
 		callback.call(socket);
 	});
 
 	socket.on('close', function() {
-		log('udp_socket> socket connection closed.');
+		log('udp_socket> Socket connection closed.');
 	});
 
 	socket.on('error', function(error) {
@@ -376,7 +376,7 @@ function auvsi_post_telemetry(cookie) {
 					if(data == 'UAS Telemetry Successfully Posted.') {
 
 						if(previous_mavlink_time_boot == mavlink_time_boot) {
-							log('No new telemetry received. Posting previously received telemetry.');
+							log('No new telemetry received. Posting previously received telemetry...');
 						} else {
 							log('Successfully posted updated telemetry.');
 						}
@@ -397,7 +397,7 @@ function auvsi_post_telemetry(cookie) {
 			request.end(query);
 
 		} else {
-			log('WARN auvsi>function>telemetry> No mavlink data has been received.');
+			log('WARN auvsi>function>telemetry> Awaiting mavlink telemetry...');
 		}
 
 		clearTimeout(task);
@@ -429,7 +429,20 @@ function auvsi_util_parse_response(response, callback) {
  * repetitive logging and log caching
  */
 function log(message) {
+
+	if(!log.lastMessage) {
+		log.lastMessage = null;
+	}
+
+	if(message == log.lastMessage) {
+		return false;
+	}
+
 	console.log(message);
+	log.lastMessage = message;
+
+	return true;
+
 }
 
 // create server for web pages
