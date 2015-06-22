@@ -1,6 +1,6 @@
 {
   "name": "interop",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Probably should have added package.json earlier",
   "main": "interop.js",
   "dependencies": {

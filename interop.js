@@ -8,11 +8,14 @@
  * same udp socket used for receiving telemetry to send auvsi
  * server obstacle information to mavproxy groundstation.
  *
+ * TODO: fetch auvsi obstacle and server data under a single setTimeout function
+ * TODO: convert obstacle object list into waypoints and send it to autopilot
+ *
  * @author juanvallejo
  * @date 6/20/15
  */
 
-var production 					= true;
+var production 					= false;
 	
 var http 						= require('http');
 var io 							= require('socket.io');
@@ -53,6 +56,8 @@ var mavlink_message_post_data = {
 	uas_heading: '0'
 };
 
+// load local auvsi default settings
+// if not in production
 if(!production) {
 
 	username = 'test';
@@ -62,34 +67,17 @@ if(!production) {
 
 }
 
-var loginQuery = 'username=' + username + '&password=' + password; 
-
 // mavlink listener
 mavlink.on('ready', function() {
 
-	console.log('Mavlink> listener ready');
+	log('mavlink> ready.');
 
-	socket.on('message', function(message, rinfo) {
-		mavlink.parse(message);
+	// bind udp socket between computer and
+	// groundstation and begin communications
+	// with auvsi server
+	bind_udp_socket(function() {
+		auvsi_do_auth();
 	});
-
-	socket.bind(mavlink_port, mavlink_host, function() {
-		console.log('Mavlink> socket bound to port ' + mavlink_port);
-	});
-
-	socket.on('listening', function() {
-		console.log('Mavlink> socket listening for data @ ' + socket.address().address);
-	});
-
-	socket.on('close', function() {
-		console.log('Mavlink> socket conection closed');
-	});
-
-	socket.on('error', function(error) {
-		console.log('ERROR>mavlink> An error occurred -> ' + error);
-	});
-
-	// mavlink listeners
 
 	/**
 	 * Listen for a decoded message
@@ -129,8 +117,6 @@ mavlink.on('ready', function() {
 			mavlink_message_post_data.uas_heading = 0;
 		}
 
-		// console.log('MAVLink> Mavlink message received (type: GPS_RAW_INIT)');
-
 		if(!received_mavlink_message) {
 			received_mavlink_message = true;
 		}
@@ -142,63 +128,112 @@ mavlink.on('ready', function() {
 		
 	});
 
-	mavlink.on('message', function(message, fields) {
-		// console.log('received mavlink message');
-	});
-
 });
 
 
-// login
-var loginAction = http.request({
-	method: 'POST',
-	path: '/api/login',
-	host: auvsi_suas_host,
-	port: auvsi_suas_port,
-	headers: {
-		'Content-Type': 'application/x-www-form-urlencoded',
-		'Content-Length': loginQuery.length
-	}
-});
+function bind_udp_socket(callback) {
 
-
-loginAction.write(loginQuery);
-loginAction.end();
-
-loginAction.on('response', function(response) {
-
-	// response contains authentication cookie
-	var responseData = '';
-
-	response.on('data', function(chunk) {
-		responseData += chunk;
+	socket.bind(mavlink_port, mavlink_host, function() {
+		log('udp_socket> socket connection established.');
 	});
 
-	response.on('end', function() {
+	// once socket is listening on the port
+	// call our callback function and continue
+	// the program's execution
+	socket.on('listening', function() {
+		log('udp_socket> listening on port ' + mavlink_port);
+		callback.call(socket);
+	});
 
-		// check response status (200 ok)
-		if(responseData == 'Login Successful.') {
+	socket.on('close', function() {
+		log('udp_socket> socket connection closed.');
+	});
 
-			// save cookie and begin rest of tasks
-			auvsi_suas_auth_cookie = response.headers['set-cookie'][0];
-			getServerData(auvsi_suas_auth_cookie);
-			getObstacleInformation(auvsi_suas_auth_cookie);
-			beginPostingTelemetry(auvsi_suas_auth_cookie);
+	socket.on('error', function(error) {
+		log('ERR udp_socket> ' + error.toString());
+	});
 
+	socket.on('message', function(message, rinfo) {
+		mavlink.parse(message);
+	});
+
+}
+
+/**
+ * authenticate with auvsi server
+ */
+function auvsi_do_auth() {
+
+	var query = 'username=' + username + '&password=' + password;
+
+	var request = http.request({
+		method: 'POST',
+		path: '/api/login',
+		host: auvsi_suas_host,
+		port: auvsi_suas_port,
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded',
+			'Content-Length': query.length
+		}
+	});
+
+	request.on('response', function(response) {
+		auvsi_util_parse_response(response, function(data) {
+
+			// if server returns successful connection
+			// 	set auth cookie as global variable and
+			// 	call interoperability functions
+			// else advertise invalid login data
+			if(data == 'Login Successful.') {
+
+				auvsi_suas_auth_cookie = response.headers['set-cookie'][0];
+				auvsi_get_info(auvsi_suas_auth_cookie);
+				auvsi_get_obstacles(auvsi_suas_auth_cookie);
+				auvsi_post_telemetry(auvsi_suas_auth_cookie);
+
+			} else {
+				log('ERR auvsi>function>auth> ' + data);
+			}
+
+		});
+	});
+
+	request.on('error', function(error) {
+
+		// if auvsi server is down, keep trying
+		// to connect every 3 seconds until it's up
+		// max number of attempts is 100
+		if(error.code == 'ECONNREFUSED') {
+
+			if(!auvsi_do_auth.timeout_attempts) {
+				auvsi_do_auth.timeout_attempts = 0;
+			}
+
+			auvsi_do_auth.timeout_attempts++;
+
+			if(auvsi_do_auth.timeout_attempts > 100) {
+				return log('ERR auvsi>function>auth> Maximum number of login attempts exceeded. Unable to establish a connection to auvsi server.');
+			}
+
+			log('WARN auvsi>function>auth> Unable to connect to auvsi server. Retrying...');
+			
+			clearTimeout(auvsi_do_auth.timeout);
+			auvsi_do_auth.timeout = setTimeout(auvsi_do_auth, 3000);
+			
+		} else {
+			log('ERR auvsi>function>auth> ' + error.toString());
 		}
 
 	});
 
-});
+	request.end(query);
 
-// setTimeout(postTelemetry, 100);
+}
 
-loginAction.on('error', function(error) {
-	console.log('ERROR>authentication failure> ' + error.toString());
-});
-
-// retrieve server time, etc...
-function getServerData(authCookie) {
+/**
+ * GET auvsi obstacle list, server time, message, message timestamp
+ */
+function auvsi_get_info(cookie) {
 
 	var server_data_timeout = setTimeout(function sdt() {
 
@@ -208,33 +243,18 @@ function getServerData(authCookie) {
 			host: auvsi_suas_host,
 			port: auvsi_suas_port,
 			headers: {
-				'Cookie': authCookie
+				'Cookie': cookie
 			}
 		});
 
 		request.on('response', function(response) {
+			auvsi_util_parse_response(response, function(data) {
 
-			var responseData = '';
-
-			response.on('data', function(chunk) {
-				responseData += chunk;
-			});
-
-			response.on('end', function() {
-
-				console.log('----------- Server Data [Interop Task 1] ----------');
-				console.log('');
-				console.log(responseData);
-				console.log('');
-				console.log('---------- /Server Data [Interop Task 1]/ ---------');
-				console.log('');
-
-				// advertise server info to browser
 				try {
 
 					var server_time;
 
-					server_data = JSON.parse(responseData);
+					server_data = JSON.parse(data);
 					server_time = server_data['server_time'];
 					server_data = server_data['server_info'];
 					server_data['server_time'] = server_time;
@@ -244,15 +264,14 @@ function getServerData(authCookie) {
 					}
 
 				} catch(e) {
-					console.log(e);
+					log(e);
 				}
 
 			});
-
 		});
 
 		request.on('error', function(error) {
-			console.log('ERROR>getServerData() failure> ' + error.toString());
+			log('ERR auvsi_get_info() failure> ' + error.toString());
 		});
 
 		request.end();
@@ -264,8 +283,11 @@ function getServerData(authCookie) {
 
 }
 
-// get obstacle data
-function getObstacleInformation(authCookie) {
+/**
+ * fetch sda obstacle data from auvsi server requires
+ * authorization cookie as the first parameter.
+ */
+function auvsi_get_obstacles(cookie) {
 
 	var obstacle_data_timeout = setTimeout(function odt() {
 
@@ -275,38 +297,27 @@ function getObstacleInformation(authCookie) {
 			host: auvsi_suas_host,
 			port: auvsi_suas_port,
 			headers: {
-				'Cookie': authCookie
+				'Cookie': cookie
 			}
 		});
 
 		request.on('response', function(response) {
+			auvsi_util_parse_response(response, function(data) {
 
-			var responseData = '';
-
-			response.on('data', function(chunk) {
-				responseData += chunk;
-			});
-
-			response.on('end', function() {
-
-				console.log('----------- Obstacle Data [Interop Task 2] ----------');
-				console.log('');
-				console.log(responseData);
-				console.log('');
-				console.log('---------- /Obstacle Data [Interop Task 2]/ ---------');
-				console.log('');
-
-				// advertise obstacle data to browser
 				try {
 
-					obstacle_data = JSON.parse(responseData);
+					obstacle_data = JSON.parse(data);
 
+					// send obstacle data as a json object to localhost clients
 					for(var i in socket_io_clients) {
 						socket_io_clients[i].emit('obstacle_data', obstacle_data);
 					}
 
+					// convert obstacle object into mavlink waypoints message and send it to
+					// groundstation here
+
 				} catch(e) {
-					console.log(e);
+					log(e);
 				}
 
 			});
@@ -314,7 +325,7 @@ function getObstacleInformation(authCookie) {
 		});
 
 		request.on('error', function(error) {
-			console.log('ERROR>getObstacleInformation() failure> ' + error.toString());
+			log('ERR auvsi>function>obstacles> ' + error.toString());
 		});
 
 		request.end();
@@ -326,8 +337,11 @@ function getObstacleInformation(authCookie) {
 
 }
 
-// post waypoints received from round station
-function beginPostingTelemetry(authCookie) {
+/**
+ * post waypoints received from ground station to auvsi server
+ * at 10Hz
+ */
+function auvsi_post_telemetry(cookie) {
 
 			
 	// holds our loop object
@@ -352,49 +366,38 @@ function beginPostingTelemetry(authCookie) {
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
 					'Content-Length': query.length,
-					'Cookie': authCookie
+					'Cookie': cookie
 				}
 			});
 
 			request.on('response', function(response) {
-
-				var data = '';
-
-				response.on('data', function(chunk) {
-					data += chunk;
-				});
-
-				response.on('end', function() {
+				auvsi_util_parse_response(response, function(data) {
 
 					if(data == 'UAS Telemetry Successfully Posted.') {
 
 						if(previous_mavlink_time_boot == mavlink_time_boot) {
-							console.log('No new telemetry received. Posting previously received telemetry.');
+							log('No new telemetry received. Posting previously received telemetry.');
 						} else {
-							console.log('Successfully posted updated telemetry.');
+							log('Successfully posted updated telemetry.');
 						}
 
 						previous_mavlink_time_boot = mavlink_time_boot;
 
-						console.log('');
-
 					} else {
-						console.log('ERR>post_telemetry() failure> ' + data);
+						log('ERR auvsi>function>telemetry> ' + data);
 					}
 
 				});
-
 			});
 
 			request.on('error', function(error) {
-				console.log('ERROR>post_telemetry() failure> ' + error.toString());
+				log('ERR auvsi>function>telemetry> ' + error.toString());
 			});
 
-			console.log('post_telemetry()> Posting telemetry()');
 			request.end(query);
 
 		} else {
-			console.log('WARN>post_telemetry()> No mavlink data has been received, posting blank data.');
+			log('WARN auvsi>function>telemetry> No mavlink data has been received.');
 		}
 
 		clearTimeout(task);
@@ -402,6 +405,31 @@ function beginPostingTelemetry(authCookie) {
 
 	}, 100);
 
+}
+
+/**
+ * parse body of an http response and return response data
+ */
+function auvsi_util_parse_response(response, callback) {
+
+	var data = '';
+
+	response.on('data', function(chunk) {
+		data += chunk;
+	});
+
+	response.on('end', function() {
+		callback.call(socket, data);
+	});
+
+}
+
+/**
+ * Custom log function. Handles
+ * repetitive logging and log caching
+ */
+function log(message) {
+	console.log(message);
 }
 
 // create server for web pages
@@ -429,7 +457,7 @@ server.listen(8000, '0.0.0.0');
 
 io.listen(server).on('connection', function(client) {
 
-	console.log('socket.io> client has connected');
+	log('socket.io>client> ' + client.id + ' has connected');
 	socket_io_clients[client.id] = client;
 
 	if(server_data) {
