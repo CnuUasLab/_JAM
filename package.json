@@ -15,5 +15,6 @@
     "interop"
   ],
   "author": "juanvallejo",
+  "private": true,
   "license": "ISC"
 }
