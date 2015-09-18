@@ -1,1 +1,38 @@
-<script src="app.js"></script>
+<!DOCTYPE html>
+<html style="background-color: grey;">
+    <head>
+        <meta charset="utf-8" />
+        <title>PNAB Map Sample</title>
+        <style>
+            html, body, #map {
+                height: 95%;
+                width: 95%;
+                margin: 0;
+                padding: 0;
+                left: 7%;
+                bottom: -7%;
+            }
+            div#footer {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                height: 18px;
+                margin: 0;
+                padding: 6px;
+                z-index: 2;
+                background: WHITE;
+            }
+        </style> 
+    </head>
+    <body>
+        <div id="map" style="float: left;"></div>
+ 
+        <div id="footer">CNU-Imprint SUAS</div>
+ 
+        <!--import google maps library-->
+        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+        <script type="text/javascript" style="border:solid;" src="app.js"></script>
+    </body>
+</html>
