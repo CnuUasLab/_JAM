@@ -40,14 +40,14 @@ var mavlink_time_boot 			= 0;
 
 var received_mavlink_message 	= false;
 
-var server_data = null;
-var obstacle_data = null;
+var server_data 				= null;
+var obstacle_data 				= null;
 
 // callbacks
-callbacks_mavlink_onready = [];
+callbacks_mavlink_onready 		= [];
 
 // socket.io
-var socket_io_clients = {};
+var socket_io_clients 			= {};
 
 // contain waypoint data
 var mavlink_message_post_data = { 
