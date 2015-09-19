@@ -1,36 +1,36 @@
+map = new OpenLayers.Map("mapdiv");
+map.addLayer(new OpenLayers.Layer.OSM());
 
-    
-//Google maps API initialisation
-    var element = document.getElementById("map");
-             
-    var map = new google.maps.Map(element, {
-        center: new google.maps.LatLng(38.285838, -76.408467), // I don't know if this would be the right location. I'm guessing.
-        zoom: 15,
-        mapTypeId: "OSM",
-        mapTypeControl: false,
-        streetViewControl: false
-    });
 
-//Define OSM map type pointing at the OpenStreetMap tile server
-    map.mapTypes.set("OSM", new google.maps.ImageMapType({
-        getTileUrl: function(coord, zoom) {
+// This is the longitude and latitude for the marker for the plane. We need to extract telemetry data and insert that.
+/*
+    var lonlatMark = new OpenLayers.LonLat( -76.408467, 38.285838 )                     
+        .transform(                                                             
+            new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
+            map.getProjectionObject() // to Spherical Mercator Projection       
+        );         
+*/
 
-            // "Wrap" x (logitude) at 180th meridian properly
-            // NB: Don't touch coord.x because coord param is by reference, and changing its x property breakes something in Google's lib
+    var zoom=15;
 
-            var tilesPerGlobe = 1 << zoom;
-            var x = coord.x % tilesPerGlobe;
+    //The vector layer
+    var vectorLayer = new OpenLayers.Layer.Vector("Overlay");
 
-            if (x < 0) {
-                x = tilesPerGlobe+x;
-                }
+    //Make the feature a plain OpenLayers marker
+    var feature = new OpenLayers.Feature.Vector(
+        new OpenLayers.Geometry.Point(-76.408467, 38.285838).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+        {description:'X-8 Plane for AUVSI SUAS Competition'} ,
+        {externalGraphic: 'img/planeicon.png', graphicHeight: 25, graphicWidth: 15, graphicXOffset:-12, graphicYOffset:-25  }
+    );
+                     
+            vectorLayer.addFeatures(feature);
+            map.addLayer(vectorLayer);
 
-            // Wrap y (latitude) in a like manner if you want to enable vertical infinite scroll
-            return "http://tile.openstreetmap.org/" + zoom + "/" + x + "/" + coord.y + ".png";
-        },
-
-        tileSize: new google.maps.Size(256, 256),
-        name: "OpenStreetMap",
-        maxZoom: 18
-    }));
+// Where to position the map.
+var lonLat = new OpenLayers.LonLat( -76.408467, 38.285838 )                     
+            .transform(                                                             
+                  new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
+                  map.getProjectionObject() // to Spherical Mercator Projection       
+             );
+map.setCenter (lonLat, zoom);
 
