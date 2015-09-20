@@ -20,7 +20,7 @@ map.addLayer(new OpenLayers.Layer.OSM());
     var feature = new OpenLayers.Feature.Vector(
         new OpenLayers.Geometry.Point(-76.408467, 38.285838).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI SUAS Competition'} ,
-        {externalGraphic: 'img/planeicon.png', graphicHeight: 25, graphicWidth: 15, graphicXOffset:-12, graphicYOffset:-25  }
+        {externalGraphic: 'img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25  }
     );
                      
             vectorLayer.addFeatures(feature);
@@ -33,4 +33,19 @@ var lonLat = new OpenLayers.LonLat( -76.408467, 38.285838 )
                   map.getProjectionObject() // to Spherical Mercator Projection       
              );
 map.setCenter (lonLat, zoom);
+
+//US Naval Electronic systems center
+function changePlaneLoc(long, lat) {
+    feature.style.externalGraphic = 'img/track_pixel.png';
+    feature.style.graphicHeight = 10;
+    feature.style.graphicWidth = 10;
+    vectorLayer.addFeatures(feature);
+    feature = new OpenLayers.Feature.Vector(
+        new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+        {description:'X-8 Plane for AUVSI Competition'} ,
+        {externalGraphic:'img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25 }
+    );
+    vectorLayer.addFeatures(feature);
+}
+
 
