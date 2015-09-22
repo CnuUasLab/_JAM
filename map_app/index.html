@@ -2,6 +2,17 @@
 <html><body>                                                                    
 <div id="mapdiv"></div>                                                         
 <script src="http://www.openlayers.org/api/OpenLayers.js"></script>             
-<script src="app.js">                                                           
-</script>                                   
+<script src="app.js"></script>
+
+<script>
+  createStationaryObsticle(-76.426091, 38.144716);
+  createStationaryObsticle(-76.426491, 38.144836);
+  createMovingObsticle( -76.426827, 38.144524, 01 );
+  createMovingObsticle( -76.426249, 38.144193, 02 );
+</script>
+                                   
+<button onclick="changePlaneLoc(-76.427591, 38.144916)">First Update</button>
+<button onclick="changePlaneLoc(-76.427291, 38.145016)">Second Update</button>
+<button onclick="changeMovingObsticleLoc(-76.427291, 38.145621, 02)">Move Object 2</button>
+<button onclick="changeMovingObsticleLoc(-76.42888, 38.145621, 01)">Move Object 1</button>
 </body></html> 
