@@ -93,12 +93,12 @@ function changeMovingObsticleLoc(long, lat, id) {
 	    curr.style.graphicYOffset = -13;
 
 	    vectorLayer.addFeatures(curr);
-	    feature = new OpenLayers.Feature.Vector(
-						    new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
-						    {description: id} ,
-						    {externalGraphic:'img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25 }
-						    );
-	    vectorLayer.addFeatures(feature);
+	    curr = new OpenLayers.Feature.Vector(
+		    new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+ 		    {description: id} ,
+		    {externalGraphic:'img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25 }
+		    );
+	    vectorLayer.addFeatures(curr);
 	    UpdateLayer(vectorLayer);
 	}
     }
