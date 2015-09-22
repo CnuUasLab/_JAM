@@ -1,36 +1,106 @@
+map = new OpenLayers.Map("mapdiv");
+map.addLayer(new OpenLayers.Layer.OSM());
 
-    
-//Google maps API initialisation
-    var element = document.getElementById("map");
-             
-    var map = new google.maps.Map(element, {
-        center: new google.maps.LatLng(38.285838, -76.408467), // I don't know if this would be the right location. I'm guessing.
-        zoom: 15,
-        mapTypeId: "OSM",
-        mapTypeControl: false,
-        streetViewControl: false
-    });
+    var zoom=17;
 
-//Define OSM map type pointing at the OpenStreetMap tile server
-    map.mapTypes.set("OSM", new google.maps.ImageMapType({
-        getTileUrl: function(coord, zoom) {
+    //The vector layer
+    var vectorLayer = new OpenLayers.Layer.Vector("Overlay");
 
-            // "Wrap" x (logitude) at 180th meridian properly
-            // NB: Don't touch coord.x because coord param is by reference, and changing its x property breakes something in Google's lib
+    //Make the feature a plain OpenLayers marker
+    var feature = new OpenLayers.Feature.Vector(
+	new OpenLayers.Geometry.Point(-76.427991, 38.144616).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+        {description:'X-8 Plane for AUVSI SUAS Competition'} ,
+        {externalGraphic: 'img/star_plane.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25  }
+        //{externalGraphic: 'img/track_pixel.png', graphicHeight: 10, graphicWidth: 10, graphicXOffset:-4, graphicYOffset:-13} * This is just for georss accuracy *
+    );
+                     
+            vectorLayer.addFeatures(feature);
+            map.addLayer(vectorLayer);
 
-            var tilesPerGlobe = 1 << zoom;
-            var x = coord.x % tilesPerGlobe;
+// Where to position the map.
+var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
+            .transform(                                                             
+                  new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
+                  map.getProjectionObject() // to Spherical Mercator Projection       
+             );
+map.setCenter (lonLat, zoom);
 
-            if (x < 0) {
-                x = tilesPerGlobe+x;
-                }
+//US Naval Electronic systems center  LonLat: (-76.427991, 38.144616)
+function changePlaneLoc(long, lat) {
+    feature.style.externalGraphic = 'img/track_pixel.png';
+    feature.style.graphicHeight = 10;
+    feature.style.graphicWidth = 10;
+    feature.style.graphicXOffset = -4;
+    feature.style.graphicYOffset = -13;
 
-            // Wrap y (latitude) in a like manner if you want to enable vertical infinite scroll
-            return "http://tile.openstreetmap.org/" + zoom + "/" + x + "/" + coord.y + ".png";
-        },
+    vectorLayer.addFeatures(feature);
+    feature = new OpenLayers.Feature.Vector(
+        new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+        {description:'X-8 Plane for AUVSI Competition'} ,
+        {externalGraphic:'img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25 }
+    );
+    vectorLayer.addFeatures(feature);
+    UpdateLayer(vectorLayer);
+}
 
-        tileSize: new google.maps.Size(256, 256),
-        name: "OpenStreetMap",
-        maxZoom: 18
-    }));
+// function to automatically update the lay maps when a marker changes position.
+function UpdateLayer(layer) {
+    //setting loaded to false unloads the layer//
+    layer.loaded = false;
+    //setting visibility to true forces a reload of the layer//
+    layer.setVisibility(true);
+    //the refresh will force it to get the new KML data//
+    layer.refresh({ force: true, params: { 'key': Math.random()} });
+    //- <3 from Thqr -//
+}
+
+
+
+// This creates an Object which will appear on the map.
+function createStationaryObsticle(long, lat) {
+    obst = new OpenLayers.Feature.Vector(
+		      new OpenLayers.Geometry.Point( long, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+		      {description: 'Stationary Object'},
+		      {externalGraphic:'img/cylinder_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25}
+					 );
+    vectorLayer.addFeatures(obst);
+}
+
+//creating an array of moving obsticles
+var arrayObstMov = [];
+
+function createMovingObsticle(long, lat, id) {
+    obst_mov = new OpenLayers.Feature.Vector(
+		      new OpenLayers.Geometry.Point( long, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+		      {description: id},
+	     	      {externalGraphic:'img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25}
+    );
+    arrayObstMov.push(obst_mov);
+    vectorLayer.addFeatures(obst_mov);
+}
+
+//function to change the location of a moving obsticle.
+function changeMovingObsticleLoc(long, lat, id) {
+    var curr;
+    for (var i = 0; i < arrayObstMov.length; i++) {
+	if (arrayObstMov[i].attributes.description == id) {
+	    curr = arrayObstMov[i];
+	    
+	    curr.style.externalGraphic = 'img/track_pixel_obst.png';
+	    curr.style.graphicHeight = 10;
+	    curr.style.graphicWidth = 10;
+	    curr.style.graphicXOffset = -4;
+	    curr.style.graphicYOffset = -13;
+
+	    vectorLayer.addFeatures(curr);
+	    feature = new OpenLayers.Feature.Vector(
+						    new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+						    {description: id} ,
+						    {externalGraphic:'img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25 }
+						    );
+	    vectorLayer.addFeatures(feature);
+	    UpdateLayer(vectorLayer);
+	}
+    }
+}
 
