@@ -1,38 +1,19 @@
-<!DOCTYPE html>
-<html style="background-color: grey;">
-    <head>
-        <meta charset="utf-8" />
-        <title>PNAB Map Sample</title>
-        <style>
-            html, body, #map {
-                height: 95%;
-                width: 95%;
-                margin: 0;
-                padding: 0;
-                left: 7%;
-                bottom: -7%;
-            }
-            div#footer {
-                position: fixed;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                width: 100%;
-                height: 18px;
-                margin: 0;
-                padding: 6px;
-                z-index: 2;
-                background: WHITE;
-            }
-        </style> 
-    </head>
-    <body>
-        <div id="map" style="float: left;"></div>
- 
-        <div id="footer">CNU-Imprint SUAS</div>
- 
-        <!--import google maps library-->
-        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
-        <script type="text/javascript" style="border:solid;" src="app.js"></script>
-    </body>
-</html>
+
+<html><body>                                                                    
+<div id="mapdiv"></div>                                                         
+<script src="http://www.openlayers.org/api/OpenLayers.js"></script>             
+<script src="app.js"></script>
+
+<script>
+  createStationaryObsticle(-76.426091, 38.144716);
+  createStationaryObsticle(-76.426491, 38.144836);
+  createMovingObsticle( -76.426827, 38.144524, 01 );
+  createMovingObsticle( -76.426249, 38.144193, 02 );
+</script>
+                                   
+<button onclick="changePlaneLoc(-76.427591, 38.144916)">First Update</button>
+<button onclick="changePlaneLoc(-76.427291, 38.145016)">Second Update</button>
+<button onclick="changeMovingObsticleLoc(-76.427291, 38.145621, 01)">Move Object 2</button>
+<button onclick="changeMovingObsticleLoc(-76.42888, 38.145621, 02)">Move Object 1</button>
+<button onclick="changePlaneLoc(-76.427479, 38.145633)">Second Update</button>
+</body></html> 
