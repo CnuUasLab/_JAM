@@ -513,24 +513,28 @@ function log(message) {
 
 }
 
+var server_router = {
+	'/': '/index.html',
+	'/map': '/map_app/index.html'
+};
+
 // create server for web pages
 var server = http.createServer(function(request, response) {
 
-	if(request.url == '/' || request.url == '/index.html') {
-		fs.readFile(__dirname + '/index.html', function(err, data) {
+	var file = server_router[request.url] || request.url;
+	console.log('serving ' + file);
 
-			if(err) {
-				response.writeHead(404);
-				return response.end('404. File not found.');
-			}
+	fs.readFile(__dirname + file, function(err, data) {
 
-			response.writeHead(200, { 'Content-Type': 'text/html' });
-			response.end(data);
+		if(err) {
+			response.writeHead(404);
+			return response.end('404. File not found.');
+		}
 
-		});
-	} else {
-		response.end('404. File not found.');
-	}
+		response.writeHead(200, { 'Content-Type': 'text/html' });
+		response.end(data);
+
+	});
 
 });
 

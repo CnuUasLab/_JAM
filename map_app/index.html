@@ -2,13 +2,26 @@
 <html><body>                                                                    
 <div id="mapdiv"></div>                                                         
 <script src="http://www.openlayers.org/api/OpenLayers.js"></script>             
-<script src="app.js"></script>
+<script src="/map_app/app.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 
 <script>
   createStationaryObsticle(-76.426091, 38.144716);
   createStationaryObsticle(-76.426491, 38.144836);
   createMovingObsticle( -76.426827, 38.144524, 01 );
   createMovingObsticle( -76.426249, 38.144193, 02 );
+</script>
+
+<script>
+var socket = io.connect(window.location.href.replace(/\map/gi, ''));
+
+socket.on('obstacle_data', function(data) {
+	console.log(data);
+});
+
+socket.on('mavlink', function(data) {
+	changePlaneLoc(data.longitude, data.latitude);
+});
 </script>
                                    
 <button onclick="changePlaneLoc(-76.427591, 38.144916)">First Update</button>
