@@ -66,26 +66,37 @@ function createStationaryObsticle(long, lat) {
     vectorLayer.addFeatures(obst);
 }
 
-//creating an array of moving obsticles
-var arrayObstMov = [];
+//Creating an array of moving obsticles
+var objectObstMov = {
+    Obsticles:[]
+};
 
+// Creates a Moving obsticle on the map
 function createMovingObsticle(long, lat, id) {
     obst_mov = new OpenLayers.Feature.Vector(
 		      new OpenLayers.Geometry.Point( long, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
 		      {description: id},
 	     	      {externalGraphic:'img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25}
     );
-    arrayObstMov.push(obst_mov);
+
+    //Creating JSON object to push to the Array
+    var obst_object = {
+        "Obsticle": obst_mov,
+        "identification" : id
+    };
+    objectObstMov.Obsticles.push(obst_object);
     vectorLayer.addFeatures(obst_mov);
 }
 
-//function to change the location of a moving obsticle.
+//function to change the location of a moving obsticle which has already been created.
 function changeMovingObsticleLoc(long, lat, id) {
     var curr;
-    for (var i = 0; i < arrayObstMov.length; i++) {
-	if (arrayObstMov[i].attributes.description == id) {
-	    curr = arrayObstMov[i];
-	    
+    for (var i = 0; i < objectObstMov.Obsticles.length; i++) {
+	if (objectObstMov.Obsticles[i].identification == id) {
+
+        //assign the current obsticle to the current element.
+	    curr = objectObstMov.Obsticles[i].Obsticle;
+
 	    curr.style.externalGraphic = 'img/track_pixel_obst.png';
 	    curr.style.graphicHeight = 10;
 	    curr.style.graphicWidth = 10;
@@ -100,7 +111,8 @@ function changeMovingObsticleLoc(long, lat, id) {
 		    );
 	    vectorLayer.addFeatures(curr);
 	    UpdateLayer(vectorLayer);
-	}
     }
+  }
 }
+
 
