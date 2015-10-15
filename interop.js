@@ -45,6 +45,7 @@ var obstacle_data 				= null;
 
 // callbacks
 callbacks_mavlink_onready 		= [];
+callbacks_mavlink_received 		= [];
 
 // socket.io
 var socket_io_clients 			= {};
@@ -75,9 +76,9 @@ read_config_file('./config.json', function() {
 	// if not in production
 	if(!config.application.in_production) {
 
-		config.auvsi.username 	= 'test';
-		config.auvsi.password 	= 'test';
-		config.auvsi.host 		= 'localhost';
+		config.auvsi.username 	= 'uas';
+		config.auvsi.password 	= 'devel';
+		config.auvsi.host 		= '137.155.2.166';
 		config.auvsi.port 		= 8080;
 
 	}
@@ -192,6 +193,13 @@ function mav_do_init() {
 			for(var i in socket_io_clients) {
 				socket_io_clients[i].emit('mavlink', mavlink_message_post_data);
 			}
+
+			// callbacks
+			for(var i = 0; i < callbacks_mavlink_received.length; i++) {
+				if(typeof callbacks_mavlink_received[i] == 'function') {
+					callbacks_mavlink_received[i].call(this, auvsi_suas_auth_cookie);
+				}
+			}
 			
 		});
 
@@ -257,7 +265,10 @@ function auvsi_do_auth() {
 				auvsi_suas_auth_cookie = response.headers['set-cookie'][0];
 				auvsi_get_info(auvsi_suas_auth_cookie);
 				auvsi_get_obstacles(auvsi_suas_auth_cookie);
-				auvsi_post_telemetry(auvsi_suas_auth_cookie);
+
+				// add auvsi_post_telemetry function to callbacks_mavlink_received
+				// it runs every time a new message is received
+				callbacks_mavlink_received.push(auvsi_post_telemetry);
 
 			} else {
 				log('ERR auvsi>function>auth> ' + data);
@@ -307,7 +318,7 @@ function auvsi_get_info(cookie) {
 
 		var request = http.request({
 			method: 'GET',
-			path: '/api/interop/server_info',
+			path: '/api/server_info',
 			host: config.auvsi.host,
 			port: config.auvsi.port,
 			headers: {
@@ -361,7 +372,7 @@ function auvsi_get_obstacles(cookie) {
 
 		var request = http.request({
 			method: 'GET',
-			path: '/api/interop/obstacles',
+			path: '/api/obstacles',
 			host: config.auvsi.host,
 			port: config.auvsi.port,
 			headers: {
@@ -418,7 +429,7 @@ function auvsi_post_telemetry(cookie) {
 	var post_telemetry_called = false;
 
 	// loop request every 100ms
-	setTimeout(function post_telemetry() {
+	// setTimeout(function post_telemetry() {
 		
 		// update query
 		query = 'latitude=' + mavlink_message_post_data.latitude + '&longitude=' + mavlink_message_post_data.longitude + '&altitude_msl=' + mavlink_message_post_data.altitude_msl + '&uas_heading=' + mavlink_message_post_data.uas_heading;
@@ -428,7 +439,7 @@ function auvsi_post_telemetry(cookie) {
 			// establish http connection to the auvsi uas server
 			var request = http.request({
 				method: 'POST',
-				path: '/api/interop/uas_telemetry',
+				path: '/api/telemetry',
 				host: config.auvsi.host,
 				port: config.auvsi.port,
 				headers: {
@@ -468,10 +479,10 @@ function auvsi_post_telemetry(cookie) {
 			log('WARN auvsi>function>telemetry> Awaiting mavlink telemetry...');
 		}
 
-		clearTimeout(task);
-		task = setTimeout(post_telemetry, 100);
+		// clearTimeout(task);
+		// task = setTimeout(post_telemetry, 100);
 
-	}, 100);
+	// }, 100);
 
 }
 
