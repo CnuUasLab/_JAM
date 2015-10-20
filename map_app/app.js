@@ -14,8 +14,8 @@ map.addLayer(new OpenLayers.Layer.OSM());
         //{externalGraphic: '/map_app/img/track_pixel.png', graphicHeight: 10, graphicWidth: 10, graphicXOffset:-4, graphicYOffset:-13} * This is just for georss accuracy *
     );
                      
-            vectorLayer.addFeatures(feature);
-            map.addLayer(vectorLayer);
+    vectorLayer.addFeatures(feature);
+    map.addLayer(vectorLayer);
 
 // Where to position the map.
 var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
@@ -26,8 +26,8 @@ var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )
 map.setCenter (lonLat, zoom);
 
 //US Naval Electronic systems center  LonLat: (-76.427991, 38.144616)
-function changePlaneLoc(long, lat) {
-    feature.style.externalGraphic = '/map_app/img/track_pixel.png';
+function changePlaneLoc(lon, lat) {
+    // feature.style.externalGraphic = '/map_app/img/track_pixel.png';
     feature.style.graphicHeight = 10;
     feature.style.graphicWidth = 10;
     feature.style.graphicXOffset = -4;
@@ -35,12 +35,19 @@ function changePlaneLoc(long, lat) {
 
     vectorLayer.addFeatures(feature);
     feature = new OpenLayers.Feature.Vector(
-        new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+        new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI Competition'} ,
         {externalGraphic:'/map_app/img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25 }
     );
     vectorLayer.addFeatures(feature);
     UpdateLayer(vectorLayer);
+
+    var lonLat = new OpenLayers.LonLat( lon, lat )                     
+            .transform(                                                             
+                  new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
+                  map.getProjectionObject() // to Spherical Mercator Projection       
+             );
+    map.panTo(lonLat);
 }
 
 // function to automatically update the lay maps when a marker changes position.

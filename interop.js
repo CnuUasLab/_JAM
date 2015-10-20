@@ -79,7 +79,7 @@ read_config_file('./config.json', function() {
 		config.auvsi.username 	= 'uas';
 		config.auvsi.password 	= 'devel';
 		config.auvsi.host 		= '137.155.2.166';
-		config.auvsi.port 		= 8080;
+		config.auvsi.port 		= 80;
 
 	}
 
@@ -193,7 +193,7 @@ function mav_do_init() {
 			for(var i in socket_io_clients) {
 				socket_io_clients[i].emit('mavlink', mavlink_message_post_data);
 			}
-
+			
 			// callbacks
 			for(var i = 0; i < callbacks_mavlink_received.length; i++) {
 				if(typeof callbacks_mavlink_received[i] == 'function') {
@@ -421,8 +421,7 @@ function auvsi_get_obstacles(cookie) {
  * at 10Hz
  */
 function auvsi_post_telemetry(cookie) {
-
-			
+	
 	// holds our loop object
 	var task = null;
 	var query = 'latitude=' + mavlink_message_post_data.latitude + '&longitude=' + mavlink_message_post_data.longitude + '&altitude_msl=' + mavlink_message_post_data.altitude_msl + '&uas_heading=' + mavlink_message_post_data.uas_heading;
