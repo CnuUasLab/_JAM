@@ -147,10 +147,21 @@ function mav_do_init() {
 			auvsi_do_auth();
 		});
 
+		var telemetryCount = 0;
+		var futureTime = (Date.now() / 1000) + 1;
+
 		/**
 		 * Listen for a decoded message
 		 */
 		mavlink.on('GLOBAL_POSITION_INT', function(message, fields) {
+
+			telemetryCount++;
+
+			if((Date.now() / 1000) >= futureTime) {
+				futureTime = (Date.now() / 1000) + 1;
+				console.log("RATE of telemetry per second = " + telemetryCount + "hz");
+				telemetryCount = 0;
+			}
 
 			// update mavlink_message_post_data
 
