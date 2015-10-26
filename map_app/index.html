@@ -29,4 +29,16 @@ socket.on('mavlink', function(data) {
 <button onclick="changeMovingObsticleLoc(-76.427291, 38.145621, 1)">Move Object 2</button>
 <button onclick="changeMovingObsticleLoc(-76.42888, 38.145621, 2)">Move Object 1</button>
 <button onclick="changePlaneLoc(-76.427479, 38.145633)">Second Update</button>
+<button onclick="
+                    var i = 0;
+                    function doStuff() {
+                        changePlaneLoc((-76.427591 + i), (38.144916 + i));
+                        i = i + 0.0001;
+                        changeMovingObsticleLoc((-76.427591 - Math.sin(i)), (38.144916 + Math.sin(i)), 2);
+                        changeMovingObsticleLoc((-76.427591 - i), (38.144916 + (2*i)), 1);
+                        setTimeout(doStuff, 100);
+                    }
+                    setTimeout(doStuff, 100);
+                    ">Loop</button>
+
 </body></html> 
