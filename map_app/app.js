@@ -13,12 +13,6 @@ map = new OpenLayers.Map("mapdiv");
 map.addLayer(new OpenLayers.Layer.OSM());
 
 
-
-
-//Image files stored here.    
-    var plane_img     = new Image();
-        plane_img.src = 'img/star_plane.png';
-
     var zoom=17;
 
     //The vector layer
