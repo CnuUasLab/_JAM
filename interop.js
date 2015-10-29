@@ -159,7 +159,12 @@ function mav_do_init() {
 
 			if((Date.now() / 1000) >= futureTime) {
 				futureTime = (Date.now() / 1000) + 1;
-				console.log("RATE of telemetry per second = " + telemetryCount + "hz");
+
+				// send mavlink event to all socket.io clients
+				for(var i in socket_io_clients) {
+					socket_io_clients[i].emit('frequency_status', { frequency: telemetryCount });
+				}
+
 				telemetryCount = 0;
 			}
 
