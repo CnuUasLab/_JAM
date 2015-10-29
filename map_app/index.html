@@ -6,13 +6,6 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-  createStationaryObsticle(-76.426091, 38.144716);
-  createStationaryObsticle(-76.426491, 38.144836);
-  createMovingObsticle( -76.426827, 38.144524, 01 );
-  createMovingObsticle( -76.426249, 38.144193, 02 );
-</script>
-
-<script>
 var socket = io.connect(window.location.href.replace(/\map/gi, ''));
 
 socket.on('obstacle_data', function(data) {
