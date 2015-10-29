@@ -55,7 +55,7 @@ var queue_plane = [];
 
 
 //US Naval Electronic systems center  LonLat: (-76.427991, 38.144616)
-function changePlaneLoc(long, lat) {
+function changePlaneLoc(lon, lat) {
 
     if (queue_plane.length >= 45) {
         vectorLayer.removeFeatures(queue_plane[0]);
@@ -72,12 +72,20 @@ function changePlaneLoc(long, lat) {
     queue_plane.push(feature);
 
     feature = new OpenLayers.Feature.Vector(
-        new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+        new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI Competition'} ,
         {externalGraphic:'map_app/img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25 }
     );
     vectorLayer.addFeatures(feature);
     UpdateLayer(vectorLayer);
+
+    var lonLat = new OpenLayers.LonLat( lon, lat )                     
+        .transform(                                                             
+            new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
+            map.getProjectionObject() // to Spherical Mercator Projection       
+        );
+
+    map.panTo(lonLat);
 }
 
 
