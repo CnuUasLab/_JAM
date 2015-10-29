@@ -12,6 +12,14 @@ body {
 	font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', 'Arial';
 }
 
+#telemetry-receive-frequency {
+	font-size: 1.0em;
+	position: absolute;
+	left: 10px;
+	top: 10px;
+}
+
+
 #wrapper {
 
 	background: transparent;
@@ -19,6 +27,7 @@ body {
 	font-size: 4em;
 	min-height: 100px;
 	margin: 8% auto 0 auto;
+	position: relative;
 	text-align: center;
 	width: 600px;
 
@@ -73,6 +82,7 @@ body {
 </head>
 <body>
 
+<div id="telemetry-receive-frequency"><span id="freq">0</span>Hz</div>
 <div id="wrapper">
 	<div id="server-wrapper">
 		<div id="server-time">0000-00-00 00:00:00.000000</div><!-- #server-time -->
@@ -135,6 +145,10 @@ body {
 		alt.innerHTML 	= parseInt(data.altitude_msl);
 		alt.title 		= data.altitude_msl;
 
+	});
+	
+	socket.on('frequency_status', function(data) {
+		document.getElementById('freq').innerHTML = data.frequency;
 	});
 
 	socket.on('server_info', function(data) {
