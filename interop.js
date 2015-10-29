@@ -148,6 +148,8 @@ function mav_do_init() {
 		});
 
 		var telemetryCount = 0;
+		var lastTelemetryFreq = 0;
+		var telemetryCountUpdated = false;
 		var futureTime = (Date.now() / 1000) + 1;
 
 		/**
@@ -155,21 +157,17 @@ function mav_do_init() {
 		 */
 		mavlink.on('GLOBAL_POSITION_INT', function(message, fields) {
 
+			telemetryCountUpdated = false;
 			telemetryCount++;
 
 			if((Date.now() / 1000) >= futureTime) {
 				futureTime = (Date.now() / 1000) + 1;
-
-				// send mavlink event to all socket.io clients
-				for(var i in socket_io_clients) {
-					socket_io_clients[i].emit('frequency_status', { frequency: telemetryCount });
-				}
-
+				lastTelemetryFreq = telemetryCount;
+				telemetryCountUpdated = true;
 				telemetryCount = 0;
 			}
 
 			// update mavlink_message_post_data
-
 			mavlink_time_boot						= fields['time_boot_ms'];
 			mavlink_message_post_data.latitude 		= fields['lat'] / (Math.pow(10, 7));
 			mavlink_message_post_data.longitude 	= fields['lon'] / (Math.pow(10, 7));
@@ -207,6 +205,9 @@ function mav_do_init() {
 
 			// send mavlink event to all socket.io clients
 			for(var i in socket_io_clients) {
+				if(telemetryCountUpdated) {
+					socket_io_clients[i].emit('frequency_status', { frequency: lastTelemetryFreq });
+				}
 				socket_io_clients[i].emit('mavlink', mavlink_message_post_data);
 			}
 			
