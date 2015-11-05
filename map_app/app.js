@@ -152,9 +152,11 @@ function createMovingObsticle(long, lat, id) {
 function changeMovingObsticleLoc(long, lat, id) {
     console.log("CHANGE MOVING OBSTICLE LOCATION CALLED");
     var curr;
+    var isContained = false;
     for (var i = 0; i < objectObstMov.Obsticles.length; i++) {
 	if (objectObstMov.Obsticles[i].identification == id) {
-
+	isContained = true;
+	
         objectObstMov.Obsticles[i].Obsticle.style.externalGraphic = 'map_app/img/track_pixel_obst.png';
         objectObstMov.Obsticles[i].Obsticle.style.graphicHeight = 10;
         objectObstMov.Obsticles[i].Obsticle.style.graphicWidth = 10;
@@ -174,9 +176,13 @@ function changeMovingObsticleLoc(long, lat, id) {
 	    vectorLayer.addFeatures(curr);
 	    UpdateLayer(vectorLayer);
     }
-    while (objectObstMov.Obsticles[i].obsticleLocation.length >= 45) {
-        vectorLayer.removeFeatures(objectObstMov.Obsticles[i].obsticleLocation[0]);
-        objectObstMov.Obsticles[i].obsticleLocation.shift();
+    if (isContained) {
+    	while (objectObstMov.Obsticles[i].obsticleLocation.length >= 45) {
+        	vectorLayer.removeFeatures(objectObstMov.Obsticles[i].obsticleLocation[0]);
+        	objectObstMov.Obsticles[i].obsticleLocation.shift();
+    	}
+    } else {
+    	createMovingObsticle(long, lat, id);
     }
 
   }
