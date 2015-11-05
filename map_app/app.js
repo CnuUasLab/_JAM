@@ -57,7 +57,7 @@ var queue_plane = [];
 //US Naval Electronic systems center  LonLat: (-76.427991, 38.144616)
 function changePlaneLoc(lon, lat) {
 
-    if (queue_plane.length >= 45) {
+    if (queue_plane.length >= 100) {
         vectorLayer.removeFeatures(queue_plane[0]);
         queue_plane.shift();
     }
