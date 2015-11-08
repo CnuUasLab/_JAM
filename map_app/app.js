@@ -17,7 +17,7 @@ map.addLayer(new OpenLayers.Layer.OSM());
 
     //The vector layer
     var vectorLayer = new OpenLayers.Layer.Vector("Overlay");
-
+    var Obst_Layer = new OpenLayers.Layer.Vector("Overlay_Obst");
 
 
 
@@ -33,6 +33,7 @@ map.addLayer(new OpenLayers.Layer.OSM());
     //Add the Plane's Icon automatically to the center of the runway.
             vectorLayer.addFeatures(feature);
             map.addLayer(vectorLayer);
+            map.addLayer(Obst_Layer);
 
 
 
@@ -124,10 +125,9 @@ var objectObstMov = {
 };
 
 
-
 // Creates a Moving obsticle on the map
 function createMovingObsticle(long, lat, id) {
-    console.log("CREATE MOVING OBSTICLE");
+    //console.log("CREATE MOVING OBSTICLE");
     obst_mov = new OpenLayers.Feature.Vector(
 		      new OpenLayers.Geometry.Point( long, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
 		      {description: id},
@@ -144,13 +144,13 @@ function createMovingObsticle(long, lat, id) {
     };
 
     objectObstMov.Obsticles.push(obst_object);
-    vectorLayer.addFeatures(obst_mov);
+    Obst_Layer.addFeatures(obst_mov);
 }
 
 
 //function to change the location of a moving obsticle which has already been created.
 function changeMovingObsticleLoc(long, lat, id) {
-    console.log("CHANGE MOVING OBSTICLE LOCATION CALLED");
+    // console.log("CHANGE MOVING OBSTICLE LOCATION CALLED");
     var curr;
     var isContained = false;
     for (var i = 0; i < objectObstMov.Obsticles.length; i++) {
@@ -164,7 +164,7 @@ function changeMovingObsticleLoc(long, lat, id) {
         objectObstMov.Obsticles[i].Obsticle.style.graphicYOffest = -10;
         
         objectObstMov.Obsticles[i].obsticleLocation.push(objectObstMov.Obsticles[i].Obsticle);
-        vectorLayer.addFeatures(objectObstMov.Obsticles[i].Obsticle);
+        Obst_Layer.addFeatures(objectObstMov.Obsticles[i].Obsticle);
 
 	    curr = new OpenLayers.Feature.Vector(
 		    new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
@@ -173,17 +173,16 @@ function changeMovingObsticleLoc(long, lat, id) {
 		    );
 
         objectObstMov.Obsticles[i].Obsticle = curr;
-	    vectorLayer.addFeatures(curr);
-	    UpdateLayer(vectorLayer);
+	    Obst_Layer.addFeatures(curr);
+	    UpdateLayer(Obst_Layer);
     }
     if (isContained) {
     	while (objectObstMov.Obsticles[i].obsticleLocation.length >= 45) {
-        	vectorLayer.removeFeatures(objectObstMov.Obsticles[i].obsticleLocation[0]);
+        	Obst_Layer.removeFeatures(objectObstMov.Obsticles[i].obsticleLocation[0]);
         	objectObstMov.Obsticles[i].obsticleLocation.shift();
     	}
     } else {
     	createMovingObsticle(long, lat, id);
     }
-
   }
 }
