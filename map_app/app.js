@@ -4,7 +4,7 @@
  * specified in methods, and functions.
  *
  *
- * @author dkroell
+ * @author davidkroell
  * @version 10/26/2015
  *
  */
@@ -185,4 +185,8 @@ function changeMovingObsticleLoc(long, lat, id) {
     	createMovingObsticle(long, lat, id);
     }
   }
+}
+
+function wipeObstacleLayer() {
+    Obst_Layer.removeAllFeatures();
 }
