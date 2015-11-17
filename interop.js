@@ -571,6 +571,15 @@ var server = http.createServer(function(request, response) {
 
 server.listen(8000, '0.0.0.0');
 
+server.on('error', function (e) {
+	if (e.code == 'EADDRINUSE') {
+		console.log('ERROR: http server port already in use, exiting');
+		process.exit(1);
+	} else {
+		console.log('ERROR: Error in http server ' + e);
+	}
+});
+
 io.listen(server).on('connection', function(client) {
 
 	log('socket.io>client> ' + client.id + ' has connected');
