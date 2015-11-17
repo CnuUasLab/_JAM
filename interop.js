@@ -346,6 +346,10 @@ function auvsi_get_info(cookie) {
 		request.on('response', function(response) {
 			auvsi_util_parse_response(response, function(data) {
 
+				if(typeof data != 'object') {
+					return console.log('API ERR /api/server_info ' + data);
+				}
+
 				try {
 
 					var server_time;
@@ -360,7 +364,7 @@ function auvsi_get_info(cookie) {
 					}
 
 				} catch(e) {
-					log(e);
+					log('API ERR /api/server_info -> ' + e);
 				}
 
 			});

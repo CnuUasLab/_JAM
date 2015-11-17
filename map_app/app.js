@@ -102,14 +102,10 @@ function UpdateLayer(layer) {
     //- <3 from Thqr -//
 }
 
-
-
-
-
 // This creates an Object which will appear on the map.
-function createStationaryObsticle(long, lat) {
+function createStationaryObsticle(lon, lat) {
     obst = new OpenLayers.Feature.Vector(
-		      new OpenLayers.Geometry.Point( long, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
 		      {description: 'Stationary Object'},
 		      {externalGraphic:'map_app/img/cylinder_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25}
 					 );
@@ -126,10 +122,10 @@ var objectObstMov = {
 
 
 // Creates a Moving obsticle on the map
-function createMovingObsticle(long, lat, id) {
+function createMovingObsticle(lon, lat, id) {
     console.log("CREATE MOVING OBSTICLE");
     obst_mov = new OpenLayers.Feature.Vector(
-		      new OpenLayers.Geometry.Point( long, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
 		      {description: id},
 	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25}
     );
@@ -149,7 +145,7 @@ function createMovingObsticle(long, lat, id) {
 
 
 //function to change the location of a moving obsticle which has already been created.
-function changeMovingObsticleLoc(long, lat, id) {
+function changeMovingObsticleLoc(lon, lat, id) {
     console.log("CHANGE MOVING OBSTICLE LOCATION CALLED");
     var curr;
     var isContained = false;
@@ -167,7 +163,7 @@ function changeMovingObsticleLoc(long, lat, id) {
         vectorLayer.addFeatures(objectObstMov.Obsticles[i].Obsticle);
 
 	    curr = new OpenLayers.Feature.Vector(
-		    new OpenLayers.Geometry.Point(long, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+		    new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
  		    {description: id} ,
 		    {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25 }
 		    );
@@ -182,7 +178,7 @@ function changeMovingObsticleLoc(long, lat, id) {
         	objectObstMov.Obsticles[i].obsticleLocation.shift();
     	}
     } else {
-    	createMovingObsticle(long, lat, id);
+    	createMovingObsticle(lon, lat, id);
     }
 
   }

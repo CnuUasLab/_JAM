@@ -2,7 +2,7 @@
 <html lang="en-us">
 <head>
 <meta charset="utf-8"/>
-<title>Interoperability Software</title>
+<title>Come on and _JAM</title>
 <script src="/socket.io/socket.io.js"></script>
 <style>
 
@@ -15,10 +15,18 @@ body {
 #telemetry-receive-frequency {
 	font-size: 1.0em;
 	position: absolute;
-	left: 10px;
+	right: 10px;
 	top: 10px;
 }
 
+#mapdiv {
+	/*background: red;*/
+	left: 0;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	width: 100%;
+}
 
 #wrapper {
 
@@ -59,20 +67,32 @@ body {
 		}
 
 		#waypoint-wrapper {
-
+			background: url(map_app/img/bg.png);
+			bottom: 0;
 			display: block;
-			font-size: 1em;
-			text-align: center;
-
+			font-size: 2em;
+			left: 0;
+			position: absolute;
+			width: 100%;
 		}
-			#waypoint-wrapper ul {
 
+			#waypoint-wrapper ul {
 				display: inline-block;
 				font-weight: 300;
 				list-style: none;
-				margin: 30px 10px 0 10px;
+				margin: 30px 10px 20px 10px;
 				padding: 0;
 			}
+				#waypoint-wrapper ul.left {
+					float: left;
+					text-align: left;
+				}
+
+				#waypoint-wrapper ul.right {
+					float: right;
+					text-align: right;
+				}
+
 				#waypoint-wrapper ul li span.bright {
 					color: #006b98;
 				}
@@ -82,22 +102,24 @@ body {
 </head>
 <body>
 
+<div id="mapdiv"></div>                                                         
+
 <div id="telemetry-receive-frequency"><span id="freq">0</span>Hz</div>
+<div id="waypoint-wrapper">
+	<ul class="left">
+		<li><span class="bright">Lat</span> <span id="lat">0</span></li>
+		<li><span class="bright">Lon</span> <span id="lon">0</span></li>
+	</ul>
+	<ul class="right">
+		<li><span class="bright">Alt</span> <span id="alt">0</span></li>
+		<li><span class="bright">Hdg</span> <span id="hdg">0</span></li>
+	</ul>
+</div><!-- #waypoint-wrapper -->
 <div id="wrapper">
 	<div id="server-wrapper">
 		<div id="server-time">0000-00-00 00:00:00.000000</div><!-- #server-time -->
 		<div id="server-message">Loading...</div><!-- #server-message -->
 		<div id="server-message-timestamp">Loading, please wait...</div><!-- #server-message-timestamp -->
-		<div id="waypoint-wrapper">
-			<ul>
-				<li><span class="bright">Lat</span> <span id="lat">0</span></li>
-				<li><span class="bright">Lon</span> <span id="lon">0</span></li>
-			</ul>
-			<ul>
-				<li><span class="bright">Alt</span> <span id="alt">0</span></li>
-				<li><span class="bright">Hdg</span> <span id="hdg">0</span></li>
-			</ul>
-		</div><!-- #waypoint-wrapper -->
 	</div><!-- #server-wrapper -->
 </div><!-- #wrapper -->
 
@@ -163,6 +185,14 @@ body {
 		console.log(data);
 	});
 
+</script>
+<script src="http://www.openlayers.org/api/OpenLayers.js"></script>             
+<script src="/map_app/app.js"></script>
+<script>
+// remove open layers text
+if(document.getElementById('OpenLayers_Control_Attribution_7')) {
+	document.getElementById('OpenLayers_Control_Attribution_7').style.display = 'none';
+}
 </script>
 </body>
 </html>
