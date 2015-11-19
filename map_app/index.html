@@ -9,7 +9,7 @@
 var socket = io.connect(window.location.href.replace(/\map/gi, ''));
 
 socket.on('obstacle_data', function(data) {
-	console.log(data);
+	arrMovObst(data);
 });
 
 socket.on('mavlink', function(data) {
