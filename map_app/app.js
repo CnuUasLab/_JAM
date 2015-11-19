@@ -18,6 +18,7 @@ map.addLayer(new OpenLayers.Layer.OSM());
     //The vector layer
     var vectorLayer = new OpenLayers.Layer.Vector("Overlay");
     var Obst_Layer = new OpenLayers.Layer.Vector("Overlay_Obst");
+    var planeLayer = new OpenLayers.Layer.Vector("Plane");
 
 
 
@@ -34,6 +35,7 @@ map.addLayer(new OpenLayers.Layer.OSM());
             vectorLayer.addFeatures(feature);
             map.addLayer(vectorLayer);
             map.addLayer(Obst_Layer);
+            map.addLayer(planeLayer);
 
 
 
@@ -51,12 +53,13 @@ map.setCenter (lonLat, zoom);
 
 //queue implementation for tracer display. To avoid overload.
 var queue_plane = [];
+var hasMoved = false;
 
 //US Naval Electronic systems center  LonLat: (-76.427991, 38.144616)
 function changePlaneLoc(lon, lat) {
 
     if (queue_plane.length >= 100) {
-        vectorLayer.removeFeatures(queue_plane[0]);
+        planeLayer.removeFeatures(queue_plane[0]);
         queue_plane.shift();
     }
 
@@ -66,16 +69,19 @@ function changePlaneLoc(lon, lat) {
     feature.style.graphicXOffset = -4;
     feature.style.graphicYOffset = -13;
 
-    vectorLayer.addFeatures(feature);
+    // vectorLayer.addFeatures(feature);
     queue_plane.push(feature);
+
+    var trackFeature = feature;
 
     feature = new OpenLayers.Feature.Vector(
         new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI Competition'} ,
         {externalGraphic:'map_app/img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25 }
     );
-    vectorLayer.addFeatures(feature);
-    UpdateLayer(vectorLayer);
+
+    UpdateLayer(vectorLayer, planeLayer, [feature, trackFeature]);
+    // vectorLayer.addFeatures(feature);
 
     var lonLat = new OpenLayers.LonLat( lon, lat )                     
         .transform(                                                             
@@ -83,21 +89,52 @@ function changePlaneLoc(lon, lat) {
             map.getProjectionObject() // to Spherical Mercator Projection       
         );
 
+    if(!hasMoved) {
+        hasMoved = true;
         map.panTo(lonLat);
+    }
 }
 
 
 
 
 // function to automatically update the lay maps when a marker changes position.
-function UpdateLayer(layer) {
+function UpdateLayer(mapLayer, planeLayer, features) {
+
     //setting loaded to false unloads the layer//
-    layer.loaded = false;
+    if(mapLayer) {
+        // mapLayer.loaded = false;
+    }
+
+    if(planeLayer) {
+        planeLayer.loaded = false;
+    }
+
     //setting visibility to true forces a reload of the layer//
-    layer.setVisibility(true);
+    if(mapLayer) {
+        // mapLayer.setVisibility(true);
+    }
+
+    if(planeLayer) {
+        planeLayer.setVisibility(true);
+    }
+
     //the refresh will force it to get the new KML data//
-    layer.refresh({ force: true, params: { 'key': Math.random()} });
+    if(mapLayer) {
+        // mapLayer.refresh({ force: true, params: { 'key': Math.random()} });
+    }
+
+    if(planeLayer) {
+        mapLayer.refresh({ force: true, params: { 'key': Math.random()} });
+    }
     //- <3 from Thqr -//
+
+    // draw feature if available
+    if(feature && planeLayer) {
+        for(var i = 0; i < features.length; i++) {
+            planeLayer.addFeatures(features[i]); 
+        }
+    }
 }
 
 // This creates an Object which will appear on the map.
