@@ -52,9 +52,6 @@ map.setCenter (lonLat, zoom);
 //queue implementation for tracer display. To avoid overload.
 var queue_plane = [];
 
-
-
-
 //US Naval Electronic systems center  LonLat: (-76.427991, 38.144616)
 function changePlaneLoc(lon, lat) {
 
@@ -86,7 +83,8 @@ function changePlaneLoc(lon, lat) {
             map.getProjectionObject() // to Spherical Mercator Projection       
         );
 
-    map.panTo(lonLat);
+        map.panTo(lonLat);
+    }
 }
 
 
@@ -149,7 +147,6 @@ function createMovingObsticle(lon, lat, id) {
 
 function changeMovingObsticleLoc(lon, lat, id) {
 
-    // console.log("CHANGE MOVING OBSTICLE LOCATION CALLED");
     var curr;
     var isContained = false;
     for (var i = 0; i < objectObstMov.Obsticles.length; i++) {
