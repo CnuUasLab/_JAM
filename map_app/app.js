@@ -84,7 +84,6 @@ function changePlaneLoc(lon, lat) {
         );
 
         map.panTo(lonLat);
-    }
 }
 
 
@@ -189,9 +188,13 @@ function arrStatObst(Obstaclearr) {
         createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude);
     }
 }
-
+    hasBeenCalled = false;
 //display and wipe the moving obstacles
 function arrMovObst(Obstaclearr) {
+    if (!hasBeenCalled) {
+        arrStatObst(Obstaclearr);
+        hasBeenCalled = true;
+    }
     wipeObstacleLayer();
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
         createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i);
