@@ -197,7 +197,7 @@ function arrStatObst(Obstaclearr) {
 function arrMovObst(Obstaclearr) {
     wipeObstacleLayer();
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
-        createMovingObsticle(Obstaclearr.moving_obstacles.length[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i);
+        createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i);
     }
 }
 
