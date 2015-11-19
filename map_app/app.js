@@ -84,7 +84,6 @@ function changePlaneLoc(lon, lat) {
         );
 
         map.panTo(lonLat);
-    }
 }
 
 

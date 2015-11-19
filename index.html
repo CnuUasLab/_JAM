@@ -14,7 +14,7 @@ body {
 
 .overlay {
 	background: rgba(0,0,0,0.54);
-	display: none;
+	display: block;
 	height: 100%;
 	left: 0;
 	position: absolute;
@@ -196,7 +196,7 @@ body {
 	});
 
 	socket.on('obstacle_data', function(data) {
-        console.log(data.moving_obstacles[0].longitude, 'x', data.moving_obstacles[0].latitude, 'vs', lon.innerHTML, 'x', lat.innerHTML);
+        // console.log(data.moving_obstacles[0].longitude, 'x', data.moving_obstacles[0].latitude, 'vs', lon.innerHTML, 'x', lat.innerHTML);
 		arrMovObst(data);
 	});
 
