@@ -122,7 +122,7 @@ var objectObstMov = {
 
 
 // Creates a Moving obsticle on the map
-function createMovingObsticle(long, lat, id) {
+function createMovingObsticle(lon, lat, id) {
     
     //console.log("CREATE MOVING OBSTICLE");
     obst_mov = new OpenLayers.Feature.Vector(
@@ -147,7 +147,7 @@ function createMovingObsticle(long, lat, id) {
 
 //function to change the location of a moving obsticle which has already been created.
 
-function changeMovingObsticleLoc(long, lat, id) {
+function changeMovingObsticleLoc(lon, lat, id) {
 
     // console.log("CHANGE MOVING OBSTICLE LOCATION CALLED");
     var curr;
