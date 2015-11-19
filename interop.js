@@ -346,7 +346,7 @@ function auvsi_get_info(cookie) {
 		request.on('response', function(response) {
 			auvsi_util_parse_response(response, function(data) {
 
-				if(typeof data != 'object') {
+				if(!data) {
 					return console.log('API ERR /api/server_info ' + data);
 				}
 
@@ -355,9 +355,10 @@ function auvsi_get_info(cookie) {
 					var server_time;
 
 					server_data = JSON.parse(data);
-					server_time = server_data['server_time'];
-					server_data = server_data['server_info'];
-					server_data['server_time'] = server_time;
+					// console.log('DATA', server_data);
+					// server_time = server_data['server_time'];
+					// server_data = server_data['server_info'];
+					// server_data['server_time'] = server_time;
 
 					for(var i in socket_io_clients) {
 						socket_io_clients[i].emit('server_info', server_data);
