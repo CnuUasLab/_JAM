@@ -188,7 +188,7 @@ function changeMovingObsticleLoc(long, lat, id) {
 
 //set up the stationary obstacles
 function arrStatObst(Obstaclearr) {
-    for (int i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
+    for (var i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
         createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude);
     }
 }
@@ -196,7 +196,7 @@ function arrStatObst(Obstaclearr) {
 //display and wipe the moving obstacles
 function arrMovObst(Obstaclearr) {
     wipeObstacleLayer();
-    for (int i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
+    for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
         createMovingObsticle(Obstaclearr.moving_obstacles.length[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i);
     }
 }
