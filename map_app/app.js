@@ -12,7 +12,6 @@
 map = new OpenLayers.Map("mapdiv");
 map.addLayer(new OpenLayers.Layer.OSM());
 
-
     var zoom = 16;
 
     //The vector layer
@@ -150,7 +149,7 @@ function createStationaryObsticle(lon, lat) {
 		      {externalGraphic:'map_app/img/cylinder_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25}
 					 );
 
-    vectorLayer.addFeatures(obst);
+    planeLayer.addFeatures(obst);
 }
 
 
