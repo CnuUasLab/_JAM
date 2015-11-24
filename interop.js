@@ -285,7 +285,8 @@ function auvsi_do_auth() {
 
 				// add auvsi_post_telemetry function to callbacks_mavlink_received
 				// it runs every time a new message is received
-				callbacks_mavlink_received.push(auvsi_post_telemetry);
+				////-- DISABLE posting
+				// callbacks_mavlink_received.push(auvsi_post_telemetry);
 
 			} else {
 				log('ERR auvsi>function>auth> ' + data);

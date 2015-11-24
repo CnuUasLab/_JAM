@@ -13,12 +13,19 @@ map = new OpenLayers.Map("mapdiv");
 map.addLayer(new OpenLayers.Layer.OSM());
 
 
-    var zoom=17;
+    var zoom = 16;
 
     //The vector layer
-    var vectorLayer = new OpenLayers.Layer.Vector("Overlay");
-    var Obst_Layer = new OpenLayers.Layer.Vector("Overlay_Obst");
-    var planeLayer = new OpenLayers.Layer.Vector("Plane");
+    var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
+        isBaseLayer: true,
+        renderers: ['SVG', 'Canvas', 'VML']
+    });
+    var Obst_Layer = new OpenLayers.Layer.Vector("Overlay_Obst", {
+        renderers: ['SVG', 'Canvas', 'VML']
+    });
+    var planeLayer = new OpenLayers.Layer.Vector("Plane", {
+        renderers: ['SVG', 'Canvas', 'VML']
+    });
 
 
 
@@ -136,11 +143,13 @@ function UpdateLayer(mapLayer, featureLayer, features) {
 
 // This creates an Object which will appear on the map.
 function createStationaryObsticle(lon, lat) {
+
     obst = new OpenLayers.Feature.Vector(
 		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
 		      {description: 'Stationary Object'},
 		      {externalGraphic:'map_app/img/cylinder_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25}
 					 );
+
     vectorLayer.addFeatures(obst);
 }
 
@@ -215,24 +224,23 @@ function changeMovingObsticleLoc(lon, lat, id) {
     }
   }
 }
-
-//set up the stationary obstacles
-function arrStatObst(Obstaclearr) {
-    for (var i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
-        createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude);
-    }
-}
     hasBeenCalled = false;
 //display and wipe the moving obstacles
 function arrMovObst(Obstaclearr) {
     if (!hasBeenCalled) {
-        arrStatObst(Obstaclearr);
+        for (var i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
+            createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude);
+        }
+
         hasBeenCalled = true;
     }
+
     wipeObstacleLayer();
+    
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
         createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i);
     }
+
 }
 
 function wipeObstacleLayer() {
