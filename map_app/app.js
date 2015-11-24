@@ -13,7 +13,7 @@ map = new OpenLayers.Map("mapdiv");
 map.addLayer(new OpenLayers.Layer.OSM());
 
 
-    var zoom=17;
+    var zoom=16;
 
     //The vector layer
     var vectorLayer = new OpenLayers.Layer.Vector("Overlay");
