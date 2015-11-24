@@ -32,7 +32,7 @@ map.addLayer(new OpenLayers.Layer.OSM());
 
 
     //Add the Plane's Icon automatically to the center of the runway.
-            vectorLayer.addFeatures(feature);
+            // vectorLayer.addFeatures(feature);
             map.addLayer(vectorLayer);
             map.addLayer(Obst_Layer);
             map.addLayer(planeLayer);
@@ -69,7 +69,6 @@ function changePlaneLoc(lon, lat) {
     feature.style.graphicXOffset = -4;
     feature.style.graphicYOffset = -13;
 
-    // vectorLayer.addFeatures(feature);
     queue_plane.push(feature);
 
     var trackFeature = feature;
@@ -80,8 +79,7 @@ function changePlaneLoc(lon, lat) {
         {externalGraphic:'map_app/img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25 }
     );
 
-    UpdateLayer(vectorLayer, planeLayer, [feature, trackFeature]);
-    // vectorLayer.addFeatures(feature);
+    UpdateLayer(null, planeLayer, [feature, trackFeature]);
 
     var lonLat = new OpenLayers.LonLat( lon, lat )                     
         .transform(                                                             
@@ -90,7 +88,6 @@ function changePlaneLoc(lon, lat) {
         );
 
     if(!hasMoved) {
-        hasMoved = true;
         map.panTo(lonLat);
     }
 }
@@ -99,40 +96,40 @@ function changePlaneLoc(lon, lat) {
 
 
 // function to automatically update the lay maps when a marker changes position.
-function UpdateLayer(mapLayer, planeLayer, features) {
+function UpdateLayer(mapLayer, featureLayer, features) {
 
     //setting loaded to false unloads the layer//
     if(mapLayer) {
-        // mapLayer.loaded = false;
+        mapLayer.loaded = false;
     }
 
-    if(planeLayer) {
-        planeLayer.loaded = false;
+    if(featureLayer) {
+        featureLayer.loaded = false;
     }
 
     //setting visibility to true forces a reload of the layer//
     if(mapLayer) {
-        // mapLayer.setVisibility(true);
+        mapLayer.setVisibility(true);
     }
 
-    if(planeLayer) {
-        planeLayer.setVisibility(true);
+    if(featureLayer) {
+        featureLayer.setVisibility(true);
     }
 
     //the refresh will force it to get the new KML data//
     if(mapLayer) {
-        // mapLayer.refresh({ force: true, params: { 'key': Math.random()} });
+        mapLayer.refresh({ force: true, params: { 'key': Math.random()} });
     }
 
-    if(planeLayer) {
-        mapLayer.refresh({ force: true, params: { 'key': Math.random()} });
+    if(featureLayer) {
+        featureLayer.refresh({ force: true, params: { 'key': Math.random()} });
     }
     //- <3 from Thqr -//
 
     // draw feature if available
-    if(feature && planeLayer) {
+    if(feature && featureLayer) {
         for(var i = 0; i < features.length; i++) {
-            planeLayer.addFeatures(features[i]); 
+            featureLayer.addFeatures(features[i]); 
         }
     }
 }
@@ -206,7 +203,7 @@ function changeMovingObsticleLoc(lon, lat, id) {
 
         objectObstMov.Obsticles[i].Obsticle = curr;
 	    Obst_Layer.addFeatures(curr);
-	    UpdateLayer(Obst_Layer);
+	    UpdateLayer(null, Obst_Layer);
     }
     if (isContained) {
     	while (objectObstMov.Obsticles[i].obsticleLocation.length >= 45) {
