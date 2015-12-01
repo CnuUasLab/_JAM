@@ -61,7 +61,7 @@ body {
 
 		#server-message {
 
-			color: #006b98;
+			color: rgba(255,255,255,0.9);
 			display: block;
 			font-size: 0.8em;
 			font-weight: 300;
@@ -103,7 +103,7 @@ body {
 				}
 
 				#waypoint-wrapper ul li span.bright {
-					color: #006b98;
+					color: rgba(255,255,255,0.9);
 				}
 
 
@@ -196,7 +196,8 @@ body {
 	});
 
 	socket.on('obstacle_data', function(data) {
-        console.log(data.moving_obstacles[0].longitude, 'x', data.moving_obstacles[0].latitude, 'vs', lon.innerHTML, 'x', lat.innerHTML);
+        // console.log(data.moving_obstacles[0].longitude, 'x', data.moving_obstacles[0].latitude, 'vs', lon.innerHTML, 'x', lat.innerHTML);
+        console.log(data);
 		arrMovObst(data);
 	});	
 

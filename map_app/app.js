@@ -163,14 +163,11 @@ var objectObstMov = {
 // Creates a Moving obsticle on the map
 function createMovingObsticle(lon, lat, id) {
     
-    //console.log("CREATE MOVING OBSTICLE");
     obst_mov = new OpenLayers.Feature.Vector(
 		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
 		      {description: id},
 	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25}
     );
-
-
 
     //Creating JSON object to push to the Array
     var obst_object = {
@@ -180,7 +177,7 @@ function createMovingObsticle(lon, lat, id) {
     };
 
     objectObstMov.Obsticles.push(obst_object);
-    Obst_Layer.addFeatures(obst_mov);
+    planeLayer.addFeatures(obst_mov);
 }
 
 
