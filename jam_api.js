@@ -1,8 +1,10 @@
-/*
- * The Abstract programming Interface for the _JAM use with DROPS
- *
- * @version 12/28/2015 - Function Shells.
- */
+/**
+  * The Abstract programming Interface for the _JAM use with DROPS
+  *
+  * @version 12/28/2015 - Function Shells.
+  */
+
+
 
 /*
  * Get the current search grid information from the Interop server.
