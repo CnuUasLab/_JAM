@@ -6,10 +6,10 @@
 
 
 
-/*
- * Get the current search grid information from the Interop server.
- * @return JSON: data that provides X and Y parameters for the Search area.
- */
+/**
+  * Get the current search grid information from the Interop server.
+  * @return JSON: data that provides X and Y parameters for the Search area.
+  */
 
 function getGrid() {
     var obj = { x:0,
@@ -20,10 +20,10 @@ function getGrid() {
     return obj;
 }
 
-/*
- * Get the Obstacle information based on the current search grid.
- * @return JSON: Data of the location of the Obstacle and readings for the specs of the obstacle.
- */
+/**
+  * Get the Obstacle information based on the current search grid.
+  * @return JSON: Data of the location of the Obstacle and readings for the specs of the obstacle.
+  */
 
 function getObstacleInformation() {
     var obj = { "moving_obstacles": [],
@@ -34,10 +34,10 @@ function getObstacleInformation() {
     return obj;
 }
 
-/*
- * Get the Goal for the current call to DROPS with the Angle to that goal
- * @return JSON: X and Y axis of the Goal, as well as the Angle.
- */
+/**
+  * Get the Goal for the current call to DROPS with the Angle to that goal
+  * @return JSON: X and Y axis of the Goal, as well as the Angle.
+  */
 
 function getGoal() {
     var obj = { "x":0, 
@@ -49,10 +49,10 @@ function getGoal() {
     return obj;
 }
 
-/*
- * Get the current location of the plane in the search grid.
- * @return JSON: the current X and Y of the plane in the search grid and the degrees from the Y axis counter-clockwise
- */
+/**
+  * Get the current location of the plane in the search grid.
+  * @return JSON: the current X and Y of the plane in the search grid and the degrees from the Y axis counter-clockwise
+  */
 
 function getGoal() {
     var obj = { "x":0,
@@ -64,9 +64,9 @@ function getGoal() {
     return obj;
 }
 
-/*
- * Get the Current Path
- */
+/**
+  * Get the Current Path
+  */
 
 function getPath() {
     return 0;
