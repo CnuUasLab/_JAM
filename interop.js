@@ -31,7 +31,7 @@ var fs 							= require('fs');
 var socket 						= require('dgram').createSocket('udp4');
 var Mavlink 					= require('mavlink');
 var mavlink 					= new Mavlink(0, 0);
-var mavlink_outgoing 			= new Mavlink(250, 0);
+var mavlink_outgoing 			= new Mavlink(250, 1);
 
 // receive api endpoint handler
 var jam_api 					= require('./jam_api.js');
@@ -51,6 +51,7 @@ var obstacle_data 				= null;
 
 // callbacks
 callbacks_mavlink_onready 		= [];
+callbacks_mavlink_outgoing_onready = [];
 callbacks_mavlink_received 		= [];
 
 // socket.io
@@ -64,6 +65,16 @@ var mavlink_message_post_data = {
 	uas_heading: '0'
 };
 
+var received_mission_count = false;
+
+var request_mission_item_limit = 0;
+var request_mission_item_count = 0;
+var request_mission_item_isFinished = false;
+
+// our waypoints are stored here
+var request_mission_item_list = {};
+var request_mission_item_list_temp = {};
+
 // mavlink finishes loading definitions
 mavlink.on('ready', function() {
 
@@ -71,6 +82,16 @@ mavlink.on('ready', function() {
 
 	for(var i = 0; i < callbacks_mavlink_onready.length; i++) {
 		callbacks_mavlink_onready[i].call(mavlink);
+	}
+
+});
+
+mavlink_outgoing.on('ready', function() {
+
+	mavlink_outgoing_isReady = true;
+
+	for(var i = 0; i < callbacks_mavlink_outgoing_onready.length; i++) {
+		callbacks_mavlink_outgoing_onready[i].call(mavlink_outgoing);
 	}
 
 });
@@ -103,7 +124,7 @@ function send_mavlink(message_type, message_body, target_ip, target_port, callba
 
 	mavlink_outgoing.createMessage(message_type, message_body, function(message) {
 
-		socket.send(message.buffer, 0, message.length + 1, target_port, target_ip, function(err, bytes) {
+		socket.send(message.buffer, 0, message.buffer.length, target_port, target_ip, function(err, bytes) {
 
 			var response = 'Message sent.';
 
@@ -173,6 +194,12 @@ function mav_do_init() {
 		callbacks_mavlink_onready.push(mavlink_init_listeners);
 	}
 
+	if(mavlink_isReady && mavlink_outgoing_isReady) {
+		request_mission_items();
+	} else {
+		callbacks_mavlink_outgoing_onready.push(request_mission_items);	
+	}
+
 	function mavlink_init_listeners() {
 
 		log('mavlink> ready.');
@@ -181,33 +208,7 @@ function mav_do_init() {
 		// groundstation and begin communications
 		// with auvsi server
 		bind_udp_socket(function() {
-			
 			auvsi_do_auth();
-
-			////--
-			// used to send messages to the ground station
-			mavlink_outgoing.on('ready', function() {
-
-				mavlink_outgoing_isReady = true;
-
-				log('mavlink> sending MISSION_REQUEST_LIST...');
-
-				send_mavlink('MISSION_REQUEST_LIST', {
-
-					'target_system': 1,
-					'target_component': 0
-
-				}, config.mavlink_outgoing.host, config.mavlink.port, function(err, response) {
-					
-					if(err) {
-						return console.log(err);
-					}
-
-					console.log(response);
-				});
-
-			});
-
 		});
 
 		var telemetryCount = 0;
@@ -218,8 +219,26 @@ function mav_do_init() {
 		// listen for response after sending MISSION_REQUEST_LIST message
 		mavlink.on('MISSION_COUNT', function(message, fields) {
 
-			console.log('received mission_count response...');
-			console.log(fields);
+			log('mavlink>MISSION_COUNT> received mission count response.');
+
+			if(!received_mission_count) {
+				received_mission_count = true;
+			}
+
+			request_mission_item_limit = fields.count;
+			request_mission_item_count = 0;
+			request_mission_item(request_mission_item_count, request_mission_item_limit);
+
+		});
+
+		mavlink.on('MISSION_CURRENT', function(message, fields) {
+
+			// determine if waypoint exists
+			if(request_mission_item_list[fields.seq]) {
+				console.error(request_mission_item_list[fields.seq]); ////--
+			} else {
+				console.error('invalid waypoint');
+			}
 
 		});
 
@@ -228,26 +247,20 @@ function mav_do_init() {
 		 */
 		mavlink.on('MISSION_ITEM', function(message, fields) {
 
-			console.log('received mission item'); ////--
-			console.log(fields);
+			request_mission_item_count++;
 
-			if(fields[4] == 'MAV_CMD_NAV_WAYPOINT') {
+			request_mission_item_list_temp[fields.seq] = fields;
 
-				console.log('FRAME =', fields[3]);
-
-				if(fields[3] == 'MAV_FRAME_GLOBAL') {
-					//
-				} else if(fields[3] == 'MAV_FRAME_GLOBAL_RELATIVE_...') {
-					//
-				}
-
+			if(!request_mission_item_isFinished) {
+				request_mission_item(request_mission_item_count, request_mission_item_limit);
+			} else {
+				onMissionItemsReceived(request_mission_item_list_temp);
 			}
 
 		});
 
 		mavlink.on('STATUSTEXT', function(message, fields) {
-			console.log('status text received');
-			console.log(fields);
+			console.log('received status text');
 		});
 
 		/**
@@ -321,6 +334,76 @@ function mav_do_init() {
 	}
 }
 
+// assumes socket has been bound
+// begins the long, lenghty process of retrieving
+// and updating all of the mission waypoints
+// better hope all steps in this spaghetti bowl work
+function request_mission_items() {
+
+	log('mavlink> sending MISSION_REQUEST_LIST...');
+
+	var host = config.mavlink_outgoing.host;
+	var port = config.mavlink_outgoing.port;
+
+	send_mavlink('MISSION_REQUEST_LIST', {
+
+		'target_system': 1,
+		'target_component': 1
+
+	}, host, port, function(err, response) {
+
+		if(err) {
+			return console.log(err);
+		}
+
+		clearTimeout(request_mission_items.timeout);
+		request_mission_items.timeout = setTimeout(function() {
+
+			// throw error if received_mission_count == false in 30 secs
+			if(!received_mission_count) {
+				log('ERROR>mavlink_outgoing>mission_request_list>', 'MISSION_COUNT not received in 30 seconds...');
+			}
+
+		}, 30000);
+
+	});
+}
+
+// called once all waypoints are received from the GCS
+function onMissionItemsReceived(tempMissionItems) {
+
+	// reset mission retrieval flags and temp array
+	clearTimeout(request_mission_items.timeout);
+	received_mission_count = false;
+
+	request_mission_item_limit = 0;
+	request_mission_item_count = 0;
+	request_mission_item_isFinished = false;
+
+	// our waypoints are stored here
+	request_mission_item_list = request_mission_item_list_temp;
+	request_mission_item_list_temp = {};
+
+	// console.error(request_mission_item_list);
+}
+
+function request_mission_item(count, limit) {
+
+	if(count == limit) {
+		request_mission_item_isFinished = true;
+	}
+
+	log('request_mission_item> requesting item #' + count + ' / ' + limit);
+
+	send_mavlink('MISSION_REQUEST', {
+		'target_system': 1,
+		'target_component': 1,
+		'seq': count
+	}, config.mavlink_outgoing.host, config.mavlink_outgoing.port, function(err, response) {
+		log('mavlink>MISSION_REQUEST> sent MISSION_ITEM request');
+	});	
+
+}
 
 function bind_udp_socket(callback) {
 

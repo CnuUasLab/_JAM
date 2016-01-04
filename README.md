@@ -8,4 +8,6 @@ Run: <b>`npm install`</b>
 
 To run the Interoperability Server run: <b>`node interop.js`</b>
 
+# SITL Config
 
+Add `--out=udpin:0.0.0.0:<port>` to send MISSION_ITEMS

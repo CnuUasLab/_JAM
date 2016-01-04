@@ -22,7 +22,7 @@ function send_mavlink(text, ip) {
 		'text': text
 	}, function(message) {
 
-		socket.send(message.buffer, 0, message.length + 1, port, ip, function(err, bytes) {
+		socket.send(message.buffer, 0, message.length, port, ip, function(err, bytes) {
 
 			if(err) {
 				console.log(err);
