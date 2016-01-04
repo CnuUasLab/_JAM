@@ -1,3 +1,6 @@
 [submodule "ol2"]
 	path = ol2
 	url = git@github.com:openlayers/ol2.git
+[submodule "Geolib"]
+	path = Geolib
+	url = git@github.com:manuelbieh/Geolib.git

@@ -19,22 +19,26 @@
 var config = {
 	application: {},
 	auvsi: {},
-	mavlink: {}
+	mavlink: {},
+	mavlink_outgoing: {}
 };
 
 var http 						= require('http');
 var io 							= require('socket.io');
 var fs 							= require('fs');
 
-// mavlink stuff	
+// instantiate mavlink library	
 var socket 						= require('dgram').createSocket('udp4');
 var Mavlink 					= require('mavlink');
 var mavlink 					= new Mavlink(0, 0);
+var mavlink_outgoing 			= new Mavlink(250, 0);
 
+// receive api endpoint handler
 var jam_api 					= require('./jam_api.js');
 
 var mavlink_isReady 			= false;
-		
+var mavlink_outgoing_isReady 	= false;		
+
 var auvsi_suas_auth_cookie 		= null;
 
 var previous_mavlink_time_boot 	= 0;
@@ -63,7 +67,7 @@ var mavlink_message_post_data = {
 // mavlink finishes loading definitions
 mavlink.on('ready', function() {
 
-	mavlink_isReady = true;
+	mavlink_isReady = true;	
 
 	for(var i = 0; i < callbacks_mavlink_onready.length; i++) {
 		callbacks_mavlink_onready[i].call(mavlink);
@@ -88,6 +92,33 @@ read_config_file('./config.json', function() {
 	mav_do_init();
 
 });
+
+// used to talk back to the ground station
+// note: should only be used once socket is bound
+function send_mavlink(message_type, message_body, target_ip, target_port, callback) {
+
+	if(typeof callback != 'function') {
+		callback = function() {};
+	}
+
+	mavlink_outgoing.createMessage(message_type, message_body, function(message) {
+
+		socket.send(message.buffer, 0, message.length + 1, target_port, target_ip, function(err, bytes) {
+
+			var response = 'Message sent.';
+
+			if(err) {
+				response = err;
+				callback.call(this, err, null);
+			} else {
+				callback.call(this, null, response);
+			}
+			
+		});
+		
+	});
+
+}
 
 /**
  * parse config file
@@ -114,6 +145,10 @@ function read_config_file(filepath, callback) {
 
 			for(var i in contents.mavlink) {
 				config.mavlink[i] = contents.mavlink[i];
+			}
+
+			for(var i in contents.mavlink_outgoing) {
+				config.mavlink_outgoing[i] = contents.mavlink_outgoing[i];
 			}
 
 			callback.call(config);
@@ -146,7 +181,33 @@ function mav_do_init() {
 		// groundstation and begin communications
 		// with auvsi server
 		bind_udp_socket(function() {
+			
 			auvsi_do_auth();
+
+			////--
+			// used to send messages to the ground station
+			mavlink_outgoing.on('ready', function() {
+
+				mavlink_outgoing_isReady = true;
+
+				log('mavlink> sending MISSION_REQUEST_LIST...');
+
+				send_mavlink('MISSION_REQUEST_LIST', {
+
+					'target_system': 1,
+					'target_component': 0
+
+				}, config.mavlink_outgoing.host, config.mavlink.port, function(err, response) {
+					
+					if(err) {
+						return console.log(err);
+					}
+
+					console.log(response);
+				});
+
+			});
+
 		});
 
 		var telemetryCount = 0;
@@ -154,8 +215,43 @@ function mav_do_init() {
 		var telemetryCountUpdated = false;
 		var futureTime = (Date.now() / 1000) + 1;
 
+		// listen for response after sending MISSION_REQUEST_LIST message
+		mavlink.on('MISSION_COUNT', function(message, fields) {
+
+			console.log('received mission_count response...');
+			console.log(fields);
+
+		});
+
 		/**
-		 * Listen for a decoded message
+		 * Handle waypoint data from GCS
+		 */
+		mavlink.on('MISSION_ITEM', function(message, fields) {
+
+			console.log('received mission item'); ////--
+			console.log(fields);
+
+			if(fields[4] == 'MAV_CMD_NAV_WAYPOINT') {
+
+				console.log('FRAME =', fields[3]);
+
+				if(fields[3] == 'MAV_FRAME_GLOBAL') {
+					//
+				} else if(fields[3] == 'MAV_FRAME_GLOBAL_RELATIVE_...') {
+					//
+				}
+
+			}
+
+		});
+
+		mavlink.on('STATUSTEXT', function(message, fields) {
+			console.log('status text received');
+			console.log(fields);
+		});
+
+		/**
+		 * Handle plane location telemetry from GCS
 		 */
 		mavlink.on('GLOBAL_POSITION_INT', function(message, fields) {
 
@@ -362,6 +458,8 @@ function auvsi_get_info(cookie) {
 					// server_time = server_data['server_time'];
 					// server_data = server_data['server_info'];
 					// server_data['server_time'] = server_time;
+
+					// 
 
 					for(var i in socket_io_clients) {
 						socket_io_clients[i].emit('server_info', server_data);

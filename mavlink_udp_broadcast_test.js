@@ -8,10 +8,10 @@
 var Mavlink 		= require('mavlink');
 var mavlink 		= new Mavlink(250, 1, 'v1.0', ['common', 'pixhawk']);
 var socket 			= require('dgram').createSocket('udp4');
-var port 			= 14550;
+var port 			= 14551;
 
 mavlink.on('ready', function() {
-	send_mavlink('THISISATEST', '137.155.2.166');
+	send_mavlink('THISISATEST', '192.168.1.10');
 	// create_mav_cmd();
 });
 
