@@ -31,6 +31,8 @@ var socket 						= require('dgram').createSocket('udp4');
 var Mavlink 					= require('mavlink');
 var mavlink 					= new Mavlink(0, 0);
 
+var jam_api 					= require('./jam_api.js');
+
 var mavlink_isReady 			= false;
 		
 var auvsi_suas_auth_cookie 		= null;
