@@ -17,5 +17,10 @@
 	"mavlink_outgoing": {
 		"host": "home.nigelarmstrong.me",
 		"port": 14552
+	},
+
+	"grid": {
+		"grid_width": 100,
+		"grid_padding_height": 10
 	}
 }

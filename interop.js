@@ -20,7 +20,8 @@ var config = {
 	application: {},
 	auvsi: {},
 	mavlink: {},
-	mavlink_outgoing: {}
+	mavlink_outgoing: {},
+	grid: {}
 };
 
 var http 						= require('http');
@@ -57,12 +58,24 @@ callbacks_mavlink_received 		= [];
 // socket.io
 var socket_io_clients 			= {};
 
+var Waypoints 					= {};
+
 // contain waypoint data
-var mavlink_message_post_data = { 
+var Telemetry = {
+
 	latitude: '0',
 	longitude: '0',
 	altitude_msl: '0',
-	uas_heading: '0'
+	uas_heading: '0',
+
+	get_currentLocation: function() {
+		return {
+			latitude: parseInt(Telemetry.latitude);
+			longitude: parseInt(Telemetry.longitude);
+			altitude_msl: parseInt(Telemetry.altitude_msl);
+			uas_heading: parseInt(Telemetry.uas_heading);
+		}
+	}
 };
 
 var received_mission_count = false;
@@ -109,6 +122,9 @@ read_config_file('./config.json', function() {
 		config.auvsi.port 		= 80;
 
 	}
+
+	// set default grid width
+	jam_api.set_config(config.grid);
 
 	mav_do_init();
 
@@ -172,6 +188,10 @@ function read_config_file(filepath, callback) {
 				config.mavlink_outgoing[i] = contents.mavlink_outgoing[i];
 			}
 
+			for(var i in contents.grid) {
+				config.grid[i] = contents.grid[i];
+			}
+
 			callback.call(config);
 
 		} catch(err) {
@@ -231,13 +251,25 @@ function mav_do_init() {
 
 		});
 
+		// retireve current waypoint
 		mavlink.on('MISSION_CURRENT', function(message, fields) {
 
 			// determine if waypoint exists
+			// update waypoints for api
 			if(request_mission_item_list[fields.seq]) {
-				console.error(request_mission_item_list[fields.seq]); ////--
+
+				Waypoints.lastWaypoint 		= request_mission_item_list[fields.seq - 1];
+				Waypoints.nextWaypoint 		= request_mission_item_list[fields.seq + 1];
+				Waypoints.followingWaypoint = request_mission_item_list[fields.seq + 2];
+				Waypoints.currentWaypoint 	= request_mission_item_list[fields.seq + 1];
+
 			} else {
-				console.error('invalid waypoint');
+
+				// assume no waypoints have been requested / loaded
+				if(!received_mission_count) {
+					clearTimeout(request_mission_items.timeout);
+					request_mission_items();
+				}
 			}
 
 		});
@@ -278,36 +310,37 @@ function mav_do_init() {
 				telemetryCount = 0;
 			}
 
-			// update mavlink_message_post_data
-			mavlink_time_boot						= fields['time_boot_ms'];
-			mavlink_message_post_data.latitude 		= fields['lat'] / (Math.pow(10, 7));
-			mavlink_message_post_data.longitude 	= fields['lon'] / (Math.pow(10, 7));
-			mavlink_message_post_data.altitude_msl 	= fields['alt'] * '0.00328084';
-			mavlink_message_post_data.uas_heading 	= fields['hdg'] / 100;
+			// update Telemetry
+			mavlink_time_boot		= fields['time_boot_ms'];
+
+			Telemetry.latitude 		= fields['lat'] / (Math.pow(10, 7));
+			Telemetry.longitude 	= fields['lon'] / (Math.pow(10, 7));
+			Telemetry.altitude_msl 	= fields['alt'] * 0.00328084;
+			Telemetry.uas_heading 	= fields['hdg'] / 100;
 
 			// check for appropriate telemetry values
-			if(mavlink_message_post_data.latitude > 90) {
-				mavlink_message_post_data.latitude = 90;
+			if(Telemetry.latitude > 90) {
+				Telemetry.latitude = 90;
 			}
 
-			if(mavlink_message_post_data.latitude < -90) {
-				mavlink_message_post_data.latitude = -90;
+			if(Telemetry.latitude < -90) {
+				Telemetry.latitude = -90;
 			}
 
-			if(mavlink_message_post_data.longitude > 180) {
-				mavlink_message_post_data.longitude = 180;
+			if(Telemetry.longitude > 180) {
+				Telemetry.longitude = 180;
 			}
 
-			if(mavlink_message_post_data.longitude < -180) {
-				mavlink_message_post_data.longitude = -180;
+			if(Telemetry.longitude < -180) {
+				Telemetry.longitude = -180;
 			}
 
-			if(mavlink_message_post_data.uas_heading > 360) {
-				mavlink_message_post_data.uas_heading = 360;
+			if(Telemetry.uas_heading > 360) {
+				Telemetry.uas_heading = 360;
 			}
 
-			if(mavlink_message_post_data.uas_heading < 0) {
-				mavlink_message_post_data.uas_heading = 0;
+			if(Telemetry.uas_heading < 0) {
+				Telemetry.uas_heading = 0;
 			}
 
 			if(!received_mavlink_message) {
@@ -319,7 +352,7 @@ function mav_do_init() {
 				if(telemetryCountUpdated) {
 					socket_io_clients[i].emit('frequency_status', { frequency: lastTelemetryFreq });
 				}
-				socket_io_clients[i].emit('mavlink', mavlink_message_post_data);
+				socket_io_clients[i].emit('mavlink', Telemetry);
 			}
 			
 			// callbacks
@@ -630,14 +663,14 @@ function auvsi_post_telemetry(cookie) {
 	
 	// holds our loop object
 	var task = null;
-	var query = 'latitude=' + mavlink_message_post_data.latitude + '&longitude=' + mavlink_message_post_data.longitude + '&altitude_msl=' + mavlink_message_post_data.altitude_msl + '&uas_heading=' + mavlink_message_post_data.uas_heading;
+	var query = 'latitude=' + Telemetry.latitude + '&longitude=' + Telemetry.longitude + '&altitude_msl=' + Telemetry.altitude_msl + '&uas_heading=' + Telemetry.uas_heading;
 	var post_telemetry_called = false;
 
 	// loop request every 100ms
 	// setTimeout(function post_telemetry() {
 		
 		// update query
-		query = 'latitude=' + mavlink_message_post_data.latitude + '&longitude=' + mavlink_message_post_data.longitude + '&altitude_msl=' + mavlink_message_post_data.altitude_msl + '&uas_heading=' + mavlink_message_post_data.uas_heading;
+		query = 'latitude=' + Telemetry.latitude + '&longitude=' + Telemetry.longitude + '&altitude_msl=' + Telemetry.altitude_msl + '&uas_heading=' + Telemetry.uas_heading;
 
 		if(received_mavlink_message) {
 
@@ -729,6 +762,40 @@ function log(message) {
 
 }
 
+/**
+ * Incoming /api/* requests handled here
+ */
+function handleAPIRequest(request, response, path) {
+
+	response.writeHead(200, {'Content-Type': 'application/json'});
+
+	if(path.match(/\/api\/grid/gi)) {
+
+		var grid = jam_api.getGridDetails(Telemetry.get_currentLocation(), Waypoints.lastWaypoint, Waypoints.nextWaypoint, Waypoints.followingWaypoint); ////--
+
+		try {
+			response.end(JSON.stringify(grid));
+		} catch(e) {
+			response.writeHead(500, {'Content-Type': 'text/plain'});
+			response.end(e.toString());
+		}
+
+		return;
+	}
+
+	if(path.match(/\/api\/path/gi) && request.type.toLowerCase() == 'put') {
+
+		response.end();
+		return;
+
+	}
+
+	// assume invalid request
+	response.writeHead(404, {'Content-Type': 'text/plain'});
+	response.end('Invalid endpoint.');
+
+}
+
 var server_router = {
 	'/': '/index.html',
 	'/map': '/map_app/index.html'
@@ -737,10 +804,17 @@ var server_router = {
 // create server for web pages
 var server = http.createServer(function(request, response) {
 
-	var file = server_router[request.url] || request.url;
-	console.log('serving ' + file);
+	var path = server_router[request.url] || request.url;
+	console.log('serving ' + path);
 
-	fs.readFile(__dirname + file, function(err, data) {
+	if(path.match(/\/api\/.*/gi)) {
+		
+		handleAPIRequest(request, response, path);
+
+		return;
+	}
+
+	fs.readFile(__dirname + path, function(err, data) {
 
 		if(err) {
 			response.writeHead(404);
