@@ -4,8 +4,6 @@
   * @version 12/28/2015 - Function Shells.
   */
 
-var geolib = require('./Geolib/dist/geolib.js');
-
 var LOCATION_SCALING_FACTOR = 0.011131884502145034;
 var LOCATION_SCALING_FACTOR_INV = 89.83204953368922;
 var DEG_TO_RAD = 0.017453292519943295769236907684886;
@@ -38,7 +36,10 @@ var publicFunctions = {
 	},
 
 	/**
-	 * Returns distance between two vectors in meters
+	 * Calculates distance between two vectors (meters).
+	 * Function taken from ArduPilot's "location.c" AP_Math library
+	 * https://github.com/diydrones/ardupilot/blob/master/libraries/AP_Math/location.cpp 
+	 * @return distance in meters
 	 */
 	get_distance: function(waypointA, waypointB) {
 
@@ -62,7 +63,7 @@ var publicFunctions = {
 		var delta_lat = waypoint2.x - waypoint1.x;
 		var delta_lon = (waypoint2.y - waypoint1.y) * publicFunctions.longitude_scale(waypoint2);
 
-		return (Math.sqrt((delta_lat * delta_lat) + (delta_lon * delta_lon))) * LOCATION_SCALING_FACTOR;
+		return (Math.sqrt(Math.pow(delta_lat, 2) + Math.pow(delta_lon, 2))) * LOCATION_SCALING_FACTOR;
 
 	},
 
