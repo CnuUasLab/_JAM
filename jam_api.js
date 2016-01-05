@@ -42,8 +42,8 @@ var publicFunctions = {
 	 */
 	get_distance: function(waypointA, waypointB) {
 
-		waypoint1 = {};
-		waypoint2 = {};
+		var waypoint1 = {};
+		var waypoint2 = {};
 
 		for(var i in waypointA) {
 			waypoint1[i] = waypointA[i];
@@ -53,11 +53,11 @@ var publicFunctions = {
 			waypoint2[i] = waypointB[i];
 		}
 
-		waypoint1.x *= 10000000;
-		waypoint1.y *= 10000000;
+		waypoint1.x *= 1e7;
+		waypoint1.y *= 1e7;
 
-		waypoint2.x *= 10000000;
-		waypoint2.y *= 10000000;
+		waypoint2.x *= 1e7;
+		waypoint2.y *= 1e7;
 
 		var delta_lat = waypoint2.x - waypoint1.x;
 		var delta_lon = (waypoint2.y - waypoint1.y) * publicFunctions.longitude_scale(waypoint2);
@@ -67,49 +67,77 @@ var publicFunctions = {
 	},
 
 	/**
-	 * Returns distance between two vectors, adjusted for different scale?
-	 * x and y relative to line between two waypoints, using trignonometric functions
+	 * Returns distance from waypointA to the line between waypointB and waypointC
+	 * Assumes waypoints contain x (latitude) and y (longitude) properties in decimal notation.
 	 *
-	 * @param waypoint1 = plane
-	 * @param waypoint2 = previosu waypoint
-	 * @param waypoint3 = next waypoint
+	 * @param waypointA 	Object 	plane
+	 * @param waypointB 	Object 	previosu waypoint
+	 * @param waypointC 	Object 	next waypoint
 	 *
-	 * @return distance between waypointA and line between waypointB and waypointC
+	 * @return distance in meters
 	 */
-	get_distance_trig: function(waypointA, waypointB, waypointC) {
+	get_distance_from_path: function(waypointA, waypointB, waypointC) {
 
-		// assume waypoint1 is origin
-		// waypoint2 is middle
-		// waypoint 3 is farthes point
+		var waypoint1 = {};
+		var waypoint2 = {};
+		var waypoint3 = {};
 
-		var theta = publicFunctions.get_angle3(waypointA, waypointB, waypointC);
-		var hypothenus = publicFunctions.get_distance(waypointA, waypointB);
+		for(var i in waypointA) {
 
-		return Math.sin(theta) * hypothenus;
+			waypoint1[i] = waypointA[i];
 
-	},
+			if(i == 'y' || i == 'x') {
 
-	/**
-	 * Same as above, but uses dot product
-	 *
-	 * @param waypoint1 = plane
-	 * @param waypoint2 = previosu waypoint
-	 * @param waypoint3 = next waypoint
-	 */
-	get_distance_vector: function(waypoint1, waypoint2, waypoint3) {
+				waypoint1[i] *= 1e7;
+
+				if(i == 'y') {
+					waypoint1[i] *= publicFunctions.longitude_scale(waypoint1);
+				}
+
+				waypoint1[i] *= LOCATION_SCALING_FACTOR;
+
+			}
+		}
+
+		for(var i in waypointB) {
+
+			waypoint2[i] = waypointB[i];
+
+			if(i == 'y' || i == 'x') {
+
+				waypoint2[i] *= 1e7;
+
+				if(i == 'y') {
+					waypoint2[i] *= publicFunctions.longitude_scale(waypoint2);
+				}
+
+				waypoint2[i] *= LOCATION_SCALING_FACTOR;
+
+			}
+		}
+
+		for(var i in waypointC) {
+
+			waypoint3[i] = waypointC[i];
+
+			if(i == 'y' || i == 'x') {
+
+				waypoint3[i] *= 1e7;
+
+				if(i == 'y') {
+					waypoint3[i] *= publicFunctions.longitude_scale(waypoint3);
+				}
+
+				waypoint3[i] *= LOCATION_SCALING_FACTOR;
+
+			}
+		}
 
 		var waypoint12 = { x: waypoint2.x - waypoint1.x, y: waypoint2.y - waypoint1.y };
 		var waypoint23 = { x: waypoint2.x - waypoint3.x, y: waypoint2.y - waypoint3.y };
 
-		// convert to meters
-		waypoint12.x = waypoint12.x * LOCATION_SCALING_FACTOR;
-		waypoint12.y = waypoint12.y * LOCATION_SCALING_FACTOR * publicFunctions.longitude_scale(waypoint12);
-
-		waypoint23.x = waypoint23.x * LOCATION_SCALING_FACTOR;
-		waypoint23.y = waypoint23.y * LOCATION_SCALING_FACTOR * publicFunctions.longitude_scale(waypoint23);
-
 		var cross = (waypoint12.x * waypoint23.y) - (waypoint12.y * waypoint23.x);
-		var dist = publicFunctions.get_distance(waypoint2, waypoint3);
+		var dist = Math.sqrt(Math.pow(waypoint3.x - waypoint2.x, 2) + Math.pow(waypoint3.y - waypoint2.y, 2));
 
 		return cross / dist;
 
