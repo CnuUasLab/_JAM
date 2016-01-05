@@ -74,7 +74,8 @@ var publicFunctions = {
 	 * @param waypointB 	Object 	previosu waypoint
 	 * @param waypointC 	Object 	next waypoint
 	 *
-	 * @return distance in meters
+	 * @return 	Object 	with properties { x: distance in meters perpendicular to path between waypointB and waypointC,
+	 * 										y: distance in meters parallel to path between waypointB and waypointC }
 	 */
 	get_distance_from_path: function(waypointA, waypointB, waypointC) {
 
@@ -136,10 +137,14 @@ var publicFunctions = {
 		var waypoint12 = { x: waypoint2.x - waypoint1.x, y: waypoint2.y - waypoint1.y };
 		var waypoint23 = { x: waypoint2.x - waypoint3.x, y: waypoint2.y - waypoint3.y };
 
+		var dot = (waypoint12.x * waypoint23.x) + (waypoint12.y * waypoint23.y);
 		var cross = (waypoint12.x * waypoint23.y) - (waypoint12.y * waypoint23.x);
 		var dist = Math.sqrt(Math.pow(waypoint3.x - waypoint2.x, 2) + Math.pow(waypoint3.y - waypoint2.y, 2));
 
-		return cross / dist;
+		return {
+			x: cross / dist,
+			y: dot / dist
+		}
 
 	},
 
@@ -202,7 +207,7 @@ var publicFunctions = {
 	 *
 	 * @return JSON: data that provides X and Y parameters for the Search area.
 	 */
-	get_grid_details: function(currentLocation, previousWaypoint, nextWaypoint, followingWaypoint) {
+	get_grid_details: function(planeTelemetry, previousWaypoint, nextWaypoint, followingWaypoint) {
 
 		var defaultResponse = {
 
@@ -226,8 +231,8 @@ var publicFunctions = {
 			// current plane location
 			"location": {
 
-				"x": 0,  // longitude -> ((lon_currLoc - lon_prevWpt) * LOCATION_SCALING_FACTOR) + publicFunctions.config.grid_padding_height;
-				"y": 0, // latitude -> ((lat_currLoc - lat_prevWpt) * longitude_scale(curr_location) * LOCATION_SCALING_FACTOR) + publicFunctions.config.grid_padding_height;
+				"x": 0,
+				"y": 0,
 				"theta": 0
 			}
 
@@ -249,14 +254,23 @@ var publicFunctions = {
 		// calculate goal theta using followingWaypoint
 		if(followingWaypoint) {
 
-			var theta_wptLast_wptNext = get_bearing(previousWaypoint, nextWaypoint);
-			var theta_wptNext_wptFollowing = get_bearing(nextWaypoint, followingWaypoint);
+			var theta_wptLast_wptNext = publicFunctions.get_bearing(previousWaypoint, nextWaypoint);
+			var theta_wptNext_wptFollowing = publicFunctions.get_bearing(nextWaypoint, followingWaypoint);
 
 			defaultResponse.goal.theta = theta_wptNext_wptFollowing - theta_wptLast_wptNext;
 		}
 
 		// calculate plane location
+		var location = publicFunctions.get_distance_from_path(planeTelemetry, previousWaypoint, nextWaypoint);
+		var theta = planeTelemetry.uas_heading - publicFunctions.get_bearing(previousWaypoint, followingWaypoint);
 
+		if(theta < 360) {
+			theta += 360;
+		}
+
+		defaultResponse.location.x = location.x + (publicFunctions.config.grid_width / 2);
+		defaultResponse.location.y = location.y + publicFunctions.config.grid_padding_height;
+		defaultResponse.location.theta = theta;
 
 		return defaultResponse;
 	},

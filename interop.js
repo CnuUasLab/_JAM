@@ -68,10 +68,10 @@ var Telemetry = {
 	altitude_msl: '0',
 	uas_heading: '0',
 
-	get_currentLocation: function() {
+	get_telemetry: function() {
 		return {
-			latitude: parseInt(Telemetry.latitude);
-			longitude: parseInt(Telemetry.longitude);
+			x: parseInt(Telemetry.latitude);
+			y: parseInt(Telemetry.longitude);
 			altitude_msl: parseInt(Telemetry.altitude_msl);
 			uas_heading: parseInt(Telemetry.uas_heading);
 		}
@@ -771,7 +771,7 @@ function handleAPIRequest(request, response, path) {
 
 	if(path.match(/\/api\/grid/gi)) {
 
-		var grid = jam_api.getGridDetails(Telemetry.get_currentLocation(), Waypoints.lastWaypoint, Waypoints.nextWaypoint, Waypoints.followingWaypoint); ////--
+		var grid = jam_api.getGridDetails(Telemetry.get_telemetry(), Waypoints.lastWaypoint, Waypoints.nextWaypoint, Waypoints.followingWaypoint); ////--
 
 		try {
 			response.end(JSON.stringify(grid));
