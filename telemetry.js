@@ -11,10 +11,10 @@ var telemetry = {
 
 	get_telemetry: function() {
 		return {
-			x: parseInt(telemetry.latitude);
-			y: parseInt(telemetry.longitude);
-			altitude_msl: parseInt(telemetry.altitude_msl);
-			uas_heading: parseInt(telemetry.uas_heading);
+			x: parseInt(telemetry.latitude),
+			y: parseInt(telemetry.longitude),
+			altitude_msl: parseInt(telemetry.altitude_msl),
+			uas_heading: parseInt(telemetry.uas_heading)
 		}
 	}
 };

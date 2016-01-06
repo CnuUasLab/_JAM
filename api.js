@@ -90,6 +90,13 @@ var api = {
 	 */
 	put_path: function() {
 		return 0;
+	},
+
+	/**
+	 * Load libmath config object
+	 */
+	set_config: function(config) {
+		libmath.set_config(config);
 	}
 
 };

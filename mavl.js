@@ -23,7 +23,7 @@ var mavlink = {
 
 		return mavlink._has_received_message;
 
-	};
+	}
 };
 
 module.exports = mavlink;
