@@ -1,14 +1,12 @@
 /**
-  * The Abstract programming Interface for the _JAM use with DROPS
-  *
-  * @version 12/28/2015 - Function Shells.
-  */
+ * Math and location utils library
+ */
 
 var LOCATION_SCALING_FACTOR = 0.011131884502145034;
 var LOCATION_SCALING_FACTOR_INV = 89.83204953368922;
 var DEG_TO_RAD = 0.017453292519943295769236907684886;
 
-var publicFunctions = {
+var libmath = {
 
 	config: {
 		grid_width: 0,
@@ -31,7 +29,7 @@ var publicFunctions = {
 	longitude_scale: function(waypoint) {
 		
 		var scale = Math.cos(waypoint.y * -0.0000001 * DEG_TO_RAD);
-    	return publicFunctions.constrain_float(scale, 0.01, 1.0);
+    	return libmath.constrain_float(scale, 0.01, 1.0);
 	
 	},
 
@@ -61,7 +59,7 @@ var publicFunctions = {
 		waypoint2.y *= 1e7;
 
 		var delta_lat = waypoint2.x - waypoint1.x;
-		var delta_lon = (waypoint2.y - waypoint1.y) * publicFunctions.longitude_scale(waypoint2);
+		var delta_lon = (waypoint2.y - waypoint1.y) * libmath.longitude_scale(waypoint2);
 
 		return (Math.sqrt(Math.pow(delta_lat, 2) + Math.pow(delta_lon, 2))) * LOCATION_SCALING_FACTOR;
 
@@ -93,7 +91,7 @@ var publicFunctions = {
 				waypoint1[i] *= 1e7;
 
 				if(i == 'y') {
-					waypoint1[i] *= publicFunctions.longitude_scale(waypoint1);
+					waypoint1[i] *= libmath.longitude_scale(waypoint1);
 				}
 
 				waypoint1[i] *= LOCATION_SCALING_FACTOR;
@@ -110,7 +108,7 @@ var publicFunctions = {
 				waypoint2[i] *= 1e7;
 
 				if(i == 'y') {
-					waypoint2[i] *= publicFunctions.longitude_scale(waypoint2);
+					waypoint2[i] *= libmath.longitude_scale(waypoint2);
 				}
 
 				waypoint2[i] *= LOCATION_SCALING_FACTOR;
@@ -127,7 +125,7 @@ var publicFunctions = {
 				waypoint3[i] *= 1e7;
 
 				if(i == 'y') {
-					waypoint3[i] *= publicFunctions.longitude_scale(waypoint3);
+					waypoint3[i] *= libmath.longitude_scale(waypoint3);
 				}
 
 				waypoint3[i] *= LOCATION_SCALING_FACTOR;
@@ -200,93 +198,10 @@ var publicFunctions = {
 
 	},
 
-	/**
-	 * @get /api/grid
-	 * Get the current search grid information from the Interop server.
-	 *
-	 * @param followingWaypoint [Waypoint] the waypoint after the nextWaypoint
-	 *
-	 * @return JSON: data that provides X and Y parameters for the Search area.
-	 */
-	get_grid_details: function(planeTelemetry, previousWaypoint, nextWaypoint, followingWaypoint) {
-
-		var defaultResponse = {
-
-			"grid_width": 0, // fixed - perpendicular to y axis
-			"grid_height": 0, // parallel to the previous and next waypoint (goal)
-			
-			// server obstacles
-			"obstacles": {
-				"moving_obstacles": [],
-				"stationary_obstacles": []
-			},
-
-			// next waypoint
-			"goal": {
-
-				"x": 0,
-				"y": 0,
-				"theta": 0
-			},
-
-			// current plane location
-			"location": {
-
-				"x": 0,
-				"y": 0,
-				"theta": 0
-			}
-
-		};
-
-		defaultResponse.grid_width = defaultResponse.config.grid_width;
-
-		// calculate distance from last waypoint to next waypoint
-		// padding also added to grid begin / end
-		if(previousWaypoint && nextWaypoint) {
-			
-			defaultResponse.grid_height = defaultResponse.goal.y = publicFunctions.get_distance(previousWaypoint, nextWaypoint) + (publicFunctions.config.grid_padding_height);
-			defaultResponse.grid_height += (publicFunctions.config.grid_padding_height);
-
-			// set rest of goal's info
-			defaultResponse.goal.x = publicFunctions.config.grid_width / 2;
-		}
-
-		// calculate goal theta using followingWaypoint
-		if(followingWaypoint) {
-
-			var theta_wptLast_wptNext = publicFunctions.get_bearing(previousWaypoint, nextWaypoint);
-			var theta_wptNext_wptFollowing = publicFunctions.get_bearing(nextWaypoint, followingWaypoint);
-
-			defaultResponse.goal.theta = theta_wptNext_wptFollowing - theta_wptLast_wptNext;
-		}
-
-		// calculate plane location
-		var location = publicFunctions.get_distance_from_path(planeTelemetry, previousWaypoint, nextWaypoint);
-		var theta = planeTelemetry.uas_heading - publicFunctions.get_bearing(previousWaypoint, followingWaypoint);
-
-		if(theta < 360) {
-			theta += 360;
-		}
-
-		defaultResponse.location.x = location.x + (publicFunctions.config.grid_width / 2);
-		defaultResponse.location.y = location.y + publicFunctions.config.grid_padding_height;
-		defaultResponse.location.theta = theta;
-
-		return defaultResponse;
-	},
-
 	set_config: function(config_object) {
-		publicFunctions.config = config_object;
-	},
-
-	/**
-	 * @put /api/path
-	 * Get the Current Path
-	 */
-	put_path: function() {
-		return 0;
+		libmath.config = config_object;
 	}
+
 };
 
-module.exports = publicFunctions;
+module.exports = libmath;

@@ -15,7 +15,9 @@
  * @date 6/20/15
  */
 
-// configuration
+/**
+ * Store config file data
+ */
 var config = {
 	application: {},
 	auvsi: {},
@@ -27,26 +29,19 @@ var config = {
 var http 						= require('http');
 var io 							= require('socket.io');
 var fs 							= require('fs');
-
-// instantiate mavlink library	
 var socket 						= require('dgram').createSocket('udp4');
-var Mavlink 					= require('mavlink');
-var mavlink 					= new Mavlink(0, 0);
-var mavlink_outgoing 			= new Mavlink(250, 1);
 
-// receive api endpoint handler
-var jam_api 					= require('./jam_api.js');
+var mavlink 					= require('./mavl.js');
+var api 						= require('./api.js');
+var telemetry 					= require('./telemetry.js');
+var waypoints 					= require('./waypoints.js');
 
 var mavlink_isReady 			= false;
-var mavlink_outgoing_isReady 	= false;		
-
-var auvsi_suas_auth_cookie 		= null;
-
+var mavlink_outgoing_isReady 	= false;
 var previous_mavlink_time_boot 	= 0;
 var mavlink_time_boot 			= 0;
 
-var received_mavlink_message 	= false;
-
+var auvsi_suas_auth_cookie 		= null;
 var server_data 				= null;
 var obstacle_data 				= null;
 
@@ -58,38 +53,19 @@ callbacks_mavlink_received 		= [];
 // socket.io
 var socket_io_clients 			= {};
 
-var Waypoints 					= {};
-
-// contain waypoint data
-var Telemetry = {
-
-	latitude: '0',
-	longitude: '0',
-	altitude_msl: '0',
-	uas_heading: '0',
-
-	get_telemetry: function() {
-		return {
-			x: parseInt(Telemetry.latitude);
-			y: parseInt(Telemetry.longitude);
-			altitude_msl: parseInt(Telemetry.altitude_msl);
-			uas_heading: parseInt(Telemetry.uas_heading);
-		}
-	}
-};
-
 var received_mission_count = false;
 
 var request_mission_item_limit = 0;
 var request_mission_item_count = 0;
 var request_mission_item_isFinished = false;
 
-// our waypoints are stored here
-var request_mission_item_list = {};
+// temporary waypoint list stored here
+// assigned to waypoints.waypoints once
+// list is complete
 var request_mission_item_list_temp = {};
 
 // mavlink finishes loading definitions
-mavlink.on('ready', function() {
+mavlink.incoming.on('ready', function() {
 
 	mavlink_isReady = true;	
 
@@ -99,7 +75,7 @@ mavlink.on('ready', function() {
 
 });
 
-mavlink_outgoing.on('ready', function() {
+mavlink.outgoing.on('ready', function() {
 
 	mavlink_outgoing_isReady = true;
 
@@ -123,8 +99,8 @@ read_config_file('./config.json', function() {
 
 	}
 
-	// set default grid width
-	jam_api.set_config(config.grid);
+	// set default grid settings
+	api.set_config(config.grid);
 
 	mav_do_init();
 
@@ -138,7 +114,7 @@ function send_mavlink(message_type, message_body, target_ip, target_port, callba
 		callback = function() {};
 	}
 
-	mavlink_outgoing.createMessage(message_type, message_body, function(message) {
+	mavlink.outgoing.createMessage(message_type, message_body, function(message) {
 
 		socket.send(message.buffer, 0, message.buffer.length, target_port, target_ip, function(err, bytes) {
 
@@ -237,7 +213,7 @@ function mav_do_init() {
 		var futureTime = (Date.now() / 1000) + 1;
 
 		// listen for response after sending MISSION_REQUEST_LIST message
-		mavlink.on('MISSION_COUNT', function(message, fields) {
+		mavlink.incoming.on('MISSION_COUNT', function(message, fields) {
 
 			log('mavlink>MISSION_COUNT> received mission count response.');
 
@@ -252,16 +228,16 @@ function mav_do_init() {
 		});
 
 		// retireve current waypoint
-		mavlink.on('MISSION_CURRENT', function(message, fields) {
+		mavlink.incoming.on('MISSION_CURRENT', function(message, fields) {
 
 			// determine if waypoint exists
 			// update waypoints for api
-			if(request_mission_item_list[fields.seq]) {
+			if(waypoints.get_waypoint(fields.seq)) {
 
-				Waypoints.lastWaypoint 		= request_mission_item_list[fields.seq - 1];
-				Waypoints.nextWaypoint 		= request_mission_item_list[fields.seq + 1];
-				Waypoints.followingWaypoint = request_mission_item_list[fields.seq + 2];
-				Waypoints.currentWaypoint 	= request_mission_item_list[fields.seq + 1];
+				waypoints.set_last_waypoint(waypoints.get_waypoint(fields.seq - 1));
+				waypoints.set_next_waypoint(waypoints.get_waypoint(fields.seq + 1));
+				waypoints.set_following_waypoint(waypoints.get_waypoint(fields.seq + 2));
+				waypoints.set_current_waypoint(waypoints.get_waypoint(fields.seq + 1));
 
 			} else {
 
@@ -277,7 +253,7 @@ function mav_do_init() {
 		/**
 		 * Handle waypoint data from GCS
 		 */
-		mavlink.on('MISSION_ITEM', function(message, fields) {
+		mavlink.incoming.on('MISSION_ITEM', function(message, fields) {
 
 			request_mission_item_count++;
 
@@ -291,14 +267,14 @@ function mav_do_init() {
 
 		});
 
-		mavlink.on('STATUSTEXT', function(message, fields) {
+		mavlink.incoming.on('STATUSTEXT', function(message, fields) {
 			console.log('received status text');
 		});
 
 		/**
 		 * Handle plane location telemetry from GCS
 		 */
-		mavlink.on('GLOBAL_POSITION_INT', function(message, fields) {
+		mavlink.incoming.on('GLOBAL_POSITION_INT', function(message, fields) {
 
 			telemetryCountUpdated = false;
 			telemetryCount++;
@@ -310,49 +286,51 @@ function mav_do_init() {
 				telemetryCount = 0;
 			}
 
-			// update Telemetry
+			// update telemetry
 			mavlink_time_boot		= fields['time_boot_ms'];
 
-			Telemetry.latitude 		= fields['lat'] / (Math.pow(10, 7));
-			Telemetry.longitude 	= fields['lon'] / (Math.pow(10, 7));
-			Telemetry.altitude_msl 	= fields['alt'] * 0.00328084;
-			Telemetry.uas_heading 	= fields['hdg'] / 100;
+			telemetry.latitude 		= fields['lat'] / (Math.pow(10, 7));
+			telemetry.longitude 	= fields['lon'] / (Math.pow(10, 7));
+			telemetry.altitude_msl 	= fields['alt'] * 0.00328084;
+			telemetry.uas_heading 	= fields['hdg'] / 100;
 
 			// check for appropriate telemetry values
-			if(Telemetry.latitude > 90) {
-				Telemetry.latitude = 90;
+			if(telemetry.latitude > 90) {
+				telemetry.latitude = 90;
 			}
 
-			if(Telemetry.latitude < -90) {
-				Telemetry.latitude = -90;
+			if(telemetry.latitude < -90) {
+				telemetry.latitude = -90;
 			}
 
-			if(Telemetry.longitude > 180) {
-				Telemetry.longitude = 180;
+			if(telemetry.longitude > 180) {
+				telemetry.longitude = 180;
 			}
 
-			if(Telemetry.longitude < -180) {
-				Telemetry.longitude = -180;
+			if(telemetry.longitude < -180) {
+				telemetry.longitude = -180;
 			}
 
-			if(Telemetry.uas_heading > 360) {
-				Telemetry.uas_heading = 360;
+			if(telemetry.uas_heading > 360) {
+				telemetry.uas_heading = 360;
 			}
 
-			if(Telemetry.uas_heading < 0) {
-				Telemetry.uas_heading = 0;
+			if(telemetry.uas_heading < 0) {
+				telemetry.uas_heading = 0;
 			}
 
-			if(!received_mavlink_message) {
-				received_mavlink_message = true;
+			if(!mavlink.has_received_message()) {
+				mavlink.has_received_message(true);
 			}
 
 			// send mavlink event to all socket.io clients
 			for(var i in socket_io_clients) {
+
 				if(telemetryCountUpdated) {
 					socket_io_clients[i].emit('frequency_status', { frequency: lastTelemetryFreq });
 				}
-				socket_io_clients[i].emit('mavlink', Telemetry);
+
+				socket_io_clients[i].emit('mavlink', telemetry);
 			}
 			
 			// callbacks
@@ -414,10 +392,9 @@ function onMissionItemsReceived(tempMissionItems) {
 	request_mission_item_isFinished = false;
 
 	// our waypoints are stored here
-	request_mission_item_list = request_mission_item_list_temp;
+	waypoints.set_waypoints(request_mission_item_list_temp);
 	request_mission_item_list_temp = {};
 
-	// console.error(request_mission_item_list);
 }
 
 function request_mission_item(count, limit) {
@@ -461,7 +438,7 @@ function bind_udp_socket(callback) {
 	});
 
 	socket.on('message', function(message, rinfo) {
-		mavlink.parse(message);
+		mavlink.incoming.parse(message);
 	});
 
 }
@@ -663,16 +640,16 @@ function auvsi_post_telemetry(cookie) {
 	
 	// holds our loop object
 	var task = null;
-	var query = 'latitude=' + Telemetry.latitude + '&longitude=' + Telemetry.longitude + '&altitude_msl=' + Telemetry.altitude_msl + '&uas_heading=' + Telemetry.uas_heading;
+	var query = 'latitude=' + telemetry.latitude + '&longitude=' + telemetry.longitude + '&altitude_msl=' + telemetry.altitude_msl + '&uas_heading=' + telemetry.uas_heading;
 	var post_telemetry_called = false;
 
 	// loop request every 100ms
 	// setTimeout(function post_telemetry() {
 		
 		// update query
-		query = 'latitude=' + Telemetry.latitude + '&longitude=' + Telemetry.longitude + '&altitude_msl=' + Telemetry.altitude_msl + '&uas_heading=' + Telemetry.uas_heading;
+		query = 'latitude=' + telemetry.latitude + '&longitude=' + telemetry.longitude + '&altitude_msl=' + telemetry.altitude_msl + '&uas_heading=' + telemetry.uas_heading;
 
-		if(received_mavlink_message) {
+		if(mavlink.has_received_message()) {
 
 			// establish http connection to the auvsi uas server
 			var request = http.request({
@@ -771,7 +748,8 @@ function handleAPIRequest(request, response, path) {
 
 	if(path.match(/\/api\/grid/gi)) {
 
-		var grid = jam_api.getGridDetails(Telemetry.get_telemetry(), Waypoints.lastWaypoint, Waypoints.nextWaypoint, Waypoints.followingWaypoint); ////--
+		var grid = api.getGridDetails(telemetry.get_telemetry(), waypoints.get_last_waypoint(), 
+		waypoints.get_next_waypoint(), waypoints.get_following_waypoint());
 
 		try {
 			response.end(JSON.stringify(grid));
