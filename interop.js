@@ -231,13 +231,12 @@ function mav_do_init() {
 		mavlink.incoming.on('MISSION_CURRENT', function(message, fields) {
 
 			// determine if waypoint exists
-			// update waypoints for api
+			// and update waypoints for api
 			if(waypoints.get_waypoint(fields.seq)) {
 
-				waypoints.set_last_waypoint(waypoints.get_waypoint(fields.seq - 1));
-				waypoints.set_next_waypoint(waypoints.get_waypoint(fields.seq + 1));
-				waypoints.set_following_waypoint(waypoints.get_waypoint(fields.seq + 2));
-				waypoints.set_current_waypoint(waypoints.get_waypoint(fields.seq + 1));
+				// setting the current waypoint also sets the
+				// next, previous, and following waypoints
+				waypoints.set_current_waypoint(fields.seq);
 
 			} else {
 
@@ -748,8 +747,7 @@ function handleAPIRequest(request, response, path) {
 
 	if(path.match(/\/api\/grid/gi)) {
 
-		var grid = api.getGridDetails(telemetry.get_telemetry(), waypoints.get_last_waypoint(), 
-		waypoints.get_next_waypoint(), waypoints.get_following_waypoint());
+		var grid = api.get_grid_details(telemetry.get_telemetry(), waypoints);
 
 		try {
 			response.end(JSON.stringify(grid));

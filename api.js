@@ -3,82 +3,65 @@
  */
 
 var libmath = require('./libmath.js');
+var grid 	= require('./grid.js');
 
 var api = {
 
+	config: {
+		grid_width: 0,
+		grid_padding_height: 0
+	},
+
 	/* Get current grid information for DROPS.
 	 *
-	 * @param followingWaypoint 	Waypoint / Object 	the waypoint after the nextWaypoint
+	 * @param waypoints 	Object 	structure of waypoint data
 	 * @return JSON: data that provides X and Y parameters for the Search area.
 	 */
-	get_grid_details: function(planeTelemetry, previousWaypoint, nextWaypoint, followingWaypoint) {
+	get_grid_details: function(telemetry, waypoints) {
 
-		var defaultResponse = {
+		var prevWaypoint = waypoints.get_last_waypoint();
+		var nextWaypoint = waypoints.get_next_waypoint()
+		var followingWaypoint = waypoints.get_following_waypoint();
 
-			"grid_width": 0, // fixed - perpendicular to y axis
-			"grid_height": 0, // parallel to the previous and next waypoint (goal)
+		grid.set_width(api.get_config('grid_width'));
+
+		// calculate distance from last waypoint to next
+		// waypoint padding also added to grid begin / end
+		if(prevWaypoint && nextWaypoint) {
 			
-			// server obstacles
-			"obstacles": {
-				"moving_obstacles": [],
-				"stationary_obstacles": []
-			},
-
-			// next waypoint
-			"goal": {
-
-				"x": 0,
-				"y": 0,
-				"theta": 0
-			},
-
-			// current plane location
-			"location": {
-
-				"x": 0,
-				"y": 0,
-				"theta": 0
-			}
-
-		};
-
-		defaultResponse.grid_width = defaultResponse.config.grid_width;
-
-		// calculate distance from last waypoint to next waypoint
-		// padding also added to grid begin / end
-		if(previousWaypoint && nextWaypoint) {
+			grid.set_height(
+				grid.set_goal_lon(libmath.get_distance(prevWaypoint, nextWaypoint) 
+					+ (api.get_config('grid_padding_height'))
+				)
+			);
 			
-			defaultResponse.grid_height = defaultResponse.goal.y = libmath.get_distance(previousWaypoint, nextWaypoint) 
-			+ (libmath.config.grid_padding_height);
-			
-			defaultResponse.grid_height += (libmath.config.grid_padding_height);
+			grid.get_grid().grid_height += (api.get_config('grid_padding_height'));
 
-			// set rest of goal's info
-			defaultResponse.goal.x = libmath.config.grid_width / 2;
+			grid.set_goal_lat(api.get_config('grid_width') / 2);
+
 		}
 
-		// calculate goal theta using followingWaypoint
 		if(followingWaypoint) {
 
-			var theta_wptLast_wptNext = libmath.get_bearing(previousWaypoint, nextWaypoint);
+			var theta_wptLast_wptNext = libmath.get_bearing(prevWaypoint, nextWaypoint);
 			var theta_wptNext_wptFollowing = libmath.get_bearing(nextWaypoint, followingWaypoint);
 
-			defaultResponse.goal.theta = theta_wptNext_wptFollowing - theta_wptLast_wptNext;
+			grid.set_goal_theta(theta_wptNext_wptFollowing - theta_wptLast_wptNext);
 		}
 
 		// calculate plane location
-		var location = libmath.get_distance_from_path(planeTelemetry, previousWaypoint, nextWaypoint);
-		var theta = planeTelemetry.uas_heading - libmath.get_bearing(previousWaypoint, followingWaypoint);
+		var location = libmath.get_distance_from_path(telemetry, prevWaypoint, nextWaypoint);
+		var theta = telemetry.uas_heading - libmath.get_bearing(prevWaypoint, followingWaypoint);
 
 		if(theta < 360) {
 			theta += 360;
 		}
 
-		defaultResponse.location.x = location.x + (libmath.config.grid_width / 2);
-		defaultResponse.location.y = location.y + libmath.config.grid_padding_height;
-		defaultResponse.location.theta = theta;
+		grid.set_location_lat(location.x + (api.get_config('grid_width') / 2));
+		grid.set_location_lon(location.y + api.get_config('grid_padding_height'));
+		grid.set_location_theta(theta);
 
-		return defaultResponse;
+		return grid.get_grid();
 	},
 
 	/**
@@ -89,14 +72,28 @@ var api = {
 	 * @return JSON: data that provides X and Y parameters for the Search area.
 	 */
 	put_path: function() {
+		// TODO
 		return 0;
 	},
 
-	/**
-	 * Load libmath config object
-	 */
-	set_config: function(config) {
-		libmath.set_config(config);
+	set_config: function(config_object, prop_value) {
+
+		if(typeof config_object == 'string') {
+			api.config[config_object] = prop_value;
+			return api.config[config_object];
+		}
+
+		api.config = config_object;
+		return api.config;
+	},
+
+	get_config: function(conf_key) {
+
+		if(conf_key) {
+			return api.config[conf_key];
+		}
+
+		return api.config;
 	}
 
 };

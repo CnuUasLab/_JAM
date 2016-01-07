@@ -8,11 +8,6 @@ var DEG_TO_RAD = 0.017453292519943295769236907684886;
 
 var libmath = {
 
-	config: {
-		grid_width: 0,
-		grid_padding_height: 0
-	},
-
 	constrain_float: function(amount, low, high) {
 		
 		if(isNaN(amount)) {
@@ -196,10 +191,6 @@ var libmath = {
 		// Math.floor(alpha * 180 / Math.PI + 0.5)
 		return alpha;
 
-	},
-
-	set_config: function(config_object) {
-		libmath.config = config_object;
 	}
 
 };
