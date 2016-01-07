@@ -50,8 +50,8 @@ var api = {
 		}
 
 		// calculate plane location
-		var location = libmath.get_distance_from_path(telemetry, prevWaypoint, nextWaypoint);
-		var theta = telemetry.uas_heading - libmath.get_bearing(prevWaypoint, followingWaypoint);
+		var location = libmath.get_distance_from_path(telemetry.get_coords(), prevWaypoint, nextWaypoint);
+		var theta = telemetry.get_heading() - libmath.get_bearing(prevWaypoint, followingWaypoint);
 
 		if(theta < 360) {
 			theta += 360;

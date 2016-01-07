@@ -31,6 +31,7 @@ var io 							= require('socket.io');
 var fs 							= require('fs');
 var socket 						= require('dgram').createSocket('udp4');
 
+var utils 						= require('./utils.js');
 var mavlink 					= require('./mavl.js');
 var api 						= require('./api.js');
 var telemetry 					= require('./telemetry.js');
@@ -38,17 +39,6 @@ var waypoints 					= require('./waypoints.js');
 
 var mavlink_isReady 			= false;
 var mavlink_outgoing_isReady 	= false;
-var previous_mavlink_time_boot 	= 0;
-var mavlink_time_boot 			= 0;
-
-var auvsi_suas_auth_cookie 		= null;
-var server_data 				= null;
-var obstacle_data 				= null;
-
-// callbacks
-callbacks_mavlink_onready 		= [];
-callbacks_mavlink_outgoing_onready = [];
-callbacks_mavlink_received 		= [];
 
 // socket.io
 var socket_io_clients 			= {};
@@ -63,6 +53,10 @@ var request_mission_item_isFinished = false;
 // assigned to waypoints.waypoints once
 // list is complete
 var request_mission_item_list_temp = {};
+
+// callbacks
+callbacks_mavlink_onready 		= [];
+callbacks_mavlink_outgoing_onready = [];
 
 // mavlink finishes loading definitions
 mavlink.incoming.on('ready', function() {
@@ -88,21 +82,11 @@ mavlink.outgoing.on('ready', function() {
 // init application by reading config file
 read_config_file('./config.json', function() {
 
-	// load local auvsi default settings
-	// if not in production
-	if(!config.application.in_production) {
-
-		config.auvsi.username 	= 'uas';
-		config.auvsi.password 	= 'devel';
-		config.auvsi.host 		= '137.155.2.166';
-		config.auvsi.port 		= 80;
-
-	}
-
-	// set default grid settings
+	// set user module configuration
 	api.set_config(config.grid);
+	auvsi.set_config(config.auvsi);
 
-	mav_do_init();
+	init();
 
 });
 
@@ -141,7 +125,7 @@ function read_config_file(filepath, callback) {
 	fs.readFile(filepath, function(err, data) {
 
 		if(err) {
-			return log('ERR config> Config file not read -> ' + err.toString());
+			return utils.log('ERR config> Config file not read -> ' + err.toString());
 		}
 
 		try {
@@ -179,9 +163,10 @@ function read_config_file(filepath, callback) {
 }
 
 /**
- * Start mavlink event listeners
+ * Start mavlink event listeners and initialize
+ * rest of the application / modules
  */
-function mav_do_init() {
+function init() {
 
 	// determine if mavlink ready event has already been fired
 	if(mavlink_isReady) {
@@ -196,161 +181,175 @@ function mav_do_init() {
 		callbacks_mavlink_outgoing_onready.push(request_mission_items);	
 	}
 
-	function mavlink_init_listeners() {
+}
 
-		log('mavlink> ready.');
+function mavlink_init_listeners() {
 
-		// bind udp socket between computer and
-		// groundstation and begin communications
-		// with auvsi server
-		bind_udp_socket(function() {
-			auvsi_do_auth();
-		});
+	utils.log('mavlink> ready.');
 
-		var telemetryCount = 0;
-		var lastTelemetryFreq = 0;
-		var telemetryCountUpdated = false;
-		var futureTime = (Date.now() / 1000) + 1;
+	// bind udp socket between computer and
+	// groundstation and begin communications
+	// with auvsi server
+	bind_udp_socket(function() {
+		auvsi.init();
+	});
 
-		// listen for response after sending MISSION_REQUEST_LIST message
-		mavlink.incoming.on('MISSION_COUNT', function(message, fields) {
+	// subscribe to auvsi server info events
+	auvsi.on('info', function(data) {
 
-			log('mavlink>MISSION_COUNT> received mission count response.');
+		for(var i in socket_io_clients) {
+			socket_io_clients[i].emit('server_info', data);
+		}
 
+	});
+
+	// subscribe to auvsi obstacle events
+	auvsi.on('obstacles', function(data) {
+
+		for(var i in socket_io_clients) {
+			socket_io_clients[i].emit('obstacle_data', data);
+		}
+
+	});
+
+	var telemetryCount = 0;
+	var lastTelemetryFreq = 0;
+	var telemetryCountUpdated = false;
+	var futureTime = (Date.now() / 1000) + 1;
+
+	// listen for response after sending MISSION_REQUEST_LIST message
+	mavlink.incoming.on('MISSION_COUNT', function(message, fields) {
+
+		utils.log('mavlink>MISSION_COUNT> received mission count response.');
+
+		if(!received_mission_count) {
+			received_mission_count = true;
+		}
+
+		request_mission_item_limit = fields.count;
+		request_mission_item_count = 0;
+		request_mission_item(request_mission_item_count, request_mission_item_limit);
+
+	});
+
+	// retireve current waypoint
+	mavlink.incoming.on('MISSION_CURRENT', function(message, fields) {
+
+		// determine if waypoint exists
+		// and update waypoints for api
+		if(waypoints.get_waypoint(fields.seq)) {
+
+			// setting the current waypoint also sets the
+			// next, previous, and following waypoints
+			waypoints.set_current_waypoint(fields.seq);
+
+		} else {
+
+			// assume no waypoints have been requested / loaded
 			if(!received_mission_count) {
-				received_mission_count = true;
+				clearTimeout(request_mission_items.timeout);
+				request_mission_items();
 			}
+		}
 
-			request_mission_item_limit = fields.count;
-			request_mission_item_count = 0;
+	});
+
+	/**
+	 * Handle waypoint data from GCS
+	 */
+	mavlink.incoming.on('MISSION_ITEM', function(message, fields) {
+
+		request_mission_item_count++;
+
+		request_mission_item_list_temp[fields.seq] = fields;
+
+		if(!request_mission_item_isFinished) {
 			request_mission_item(request_mission_item_count, request_mission_item_limit);
+		} else {
+			onMissionItemsReceived(request_mission_item_list_temp);
+		}
 
-		});
+	});
 
-		// retireve current waypoint
-		mavlink.incoming.on('MISSION_CURRENT', function(message, fields) {
+	mavlink.incoming.on('STATUSTEXT', function(message, fields) {
+		console.log('received status text');
+	});
 
-			// determine if waypoint exists
-			// and update waypoints for api
-			if(waypoints.get_waypoint(fields.seq)) {
+	/**
+	 * Handle plane location telemetry from GCS
+	 */
+	mavlink.incoming.on('GLOBAL_POSITION_INT', function(message, fields) {
 
-				// setting the current waypoint also sets the
-				// next, previous, and following waypoints
-				waypoints.set_current_waypoint(fields.seq);
+		telemetryCountUpdated = false;
+		telemetryCount++;
 
-			} else {
+		if((Date.now() / 1000) >= futureTime) {
+			futureTime = (Date.now() / 1000) + 1;
+			lastTelemetryFreq = telemetryCount;
+			telemetryCountUpdated = true;
+			telemetryCount = 0;
+		}
 
-				// assume no waypoints have been requested / loaded
-				if(!received_mission_count) {
-					clearTimeout(request_mission_items.timeout);
-					request_mission_items();
-				}
+		// update telemetry
+		mavlink.set_time_boot(fields['time_boot_ms']);
+
+		telemetry.set_lat(fields['lat'] / (Math.pow(10, 7)));
+		telemetry.set_lon(fields['lon'] / (Math.pow(10, 7)));
+		telemetry.set_alt_msl(fields['alt'] * 0.00328084);
+		telemetry.set_heading(fields['hdg'] / 100);
+
+		// check for appropriate telemetry values
+		if(telemetry.get_lat() > 90) {
+			telemetry.set_lat(90);
+		}
+
+		if(telemetry.get_lat() < -90) {
+			telemetry.set_lat(-90);
+		}
+
+		if(telemetry.get_lon() > 180) {
+			telemetry.set_lon(180);
+		}
+
+		if(telemetry.get_lon() < -180) {
+			telemetry.set_lon(-180);
+		}
+
+		if(telemetry.get_heading() > 360) {
+			telemetry.set_heading(360);
+		}
+
+		if(telemetry.get_heading() < 0) {
+			telemetry.set_heading(0);
+		}
+
+		if(!mavlink.is_received_message()) {
+			mavlink.is_received_message(true);
+		}
+
+		// post telemetry to auvsi
+		auvsi.post_telemetry(telemetry, mavlink);
+
+		// send mavlink event to all socket.io clients
+		for(var i in socket_io_clients) {
+
+			if(telemetryCountUpdated) {
+				socket_io_clients[i].emit('frequency_status', { frequency: lastTelemetryFreq });
 			}
 
-		});
+			socket_io_clients[i].emit('mavlink', telemetry);
+		}
+		
+	});
 
-		/**
-		 * Handle waypoint data from GCS
-		 */
-		mavlink.incoming.on('MISSION_ITEM', function(message, fields) {
-
-			request_mission_item_count++;
-
-			request_mission_item_list_temp[fields.seq] = fields;
-
-			if(!request_mission_item_isFinished) {
-				request_mission_item(request_mission_item_count, request_mission_item_limit);
-			} else {
-				onMissionItemsReceived(request_mission_item_list_temp);
-			}
-
-		});
-
-		mavlink.incoming.on('STATUSTEXT', function(message, fields) {
-			console.log('received status text');
-		});
-
-		/**
-		 * Handle plane location telemetry from GCS
-		 */
-		mavlink.incoming.on('GLOBAL_POSITION_INT', function(message, fields) {
-
-			telemetryCountUpdated = false;
-			telemetryCount++;
-
-			if((Date.now() / 1000) >= futureTime) {
-				futureTime = (Date.now() / 1000) + 1;
-				lastTelemetryFreq = telemetryCount;
-				telemetryCountUpdated = true;
-				telemetryCount = 0;
-			}
-
-			// update telemetry
-			mavlink_time_boot		= fields['time_boot_ms'];
-
-			telemetry.latitude 		= fields['lat'] / (Math.pow(10, 7));
-			telemetry.longitude 	= fields['lon'] / (Math.pow(10, 7));
-			telemetry.altitude_msl 	= fields['alt'] * 0.00328084;
-			telemetry.uas_heading 	= fields['hdg'] / 100;
-
-			// check for appropriate telemetry values
-			if(telemetry.latitude > 90) {
-				telemetry.latitude = 90;
-			}
-
-			if(telemetry.latitude < -90) {
-				telemetry.latitude = -90;
-			}
-
-			if(telemetry.longitude > 180) {
-				telemetry.longitude = 180;
-			}
-
-			if(telemetry.longitude < -180) {
-				telemetry.longitude = -180;
-			}
-
-			if(telemetry.uas_heading > 360) {
-				telemetry.uas_heading = 360;
-			}
-
-			if(telemetry.uas_heading < 0) {
-				telemetry.uas_heading = 0;
-			}
-
-			if(!mavlink.has_received_message()) {
-				mavlink.has_received_message(true);
-			}
-
-			// send mavlink event to all socket.io clients
-			for(var i in socket_io_clients) {
-
-				if(telemetryCountUpdated) {
-					socket_io_clients[i].emit('frequency_status', { frequency: lastTelemetryFreq });
-				}
-
-				socket_io_clients[i].emit('mavlink', telemetry);
-			}
-			
-			// callbacks
-			for(var i = 0; i < callbacks_mavlink_received.length; i++) {
-				if(typeof callbacks_mavlink_received[i] == 'function') {
-					callbacks_mavlink_received[i].call(this, auvsi_suas_auth_cookie);
-				}
-			}
-			
-		});
-
-	}
 }
 
 // assumes socket has been bound
 // begins the long, lenghty process of retrieving
 // and updating all of the mission waypoints
-// better hope all steps in this spaghetti bowl work
 function request_mission_items() {
 
-	log('mavlink> sending MISSION_REQUEST_LIST...');
+	utils.log('mavlink> sending MISSION_REQUEST_LIST...');
 
 	var host = config.mavlink_outgoing.host;
 	var port = config.mavlink_outgoing.port;
@@ -371,7 +370,7 @@ function request_mission_items() {
 
 			// throw error if received_mission_count == false in 30 secs
 			if(!received_mission_count) {
-				log('ERROR>mavlink_outgoing>mission_request_list>', 'MISSION_COUNT not received in 30 seconds...');
+				utils.log('ERROR>mavlink_outgoing>mission_request_list>', 'MISSION_COUNT not received in 30 seconds...');
 			}
 
 		}, 30000);
@@ -402,14 +401,14 @@ function request_mission_item(count, limit) {
 		request_mission_item_isFinished = true;
 	}
 
-	log('request_mission_item> requesting item #' + count + ' / ' + limit);
+	utils.log('request_mission_item> requesting item #' + count + ' / ' + limit);
 
 	send_mavlink('MISSION_REQUEST', {
 		'target_system': 1,
 		'target_component': 1,
 		'seq': count
 	}, config.mavlink_outgoing.host, config.mavlink_outgoing.port, function(err, response) {
-		log('mavlink>MISSION_REQUEST> sent MISSION_ITEM request');
+		utils.log('mavlink>MISSION_REQUEST> sent MISSION_ITEM request');
 	});	
 
 }
@@ -417,324 +416,28 @@ function request_mission_item(count, limit) {
 function bind_udp_socket(callback) {
 
 	socket.bind(config.mavlink.port, config.mavlink.host, function() {
-		log('udp_socket> Socket connection established.');
+		utils.log('udp_socket> Socket connection established.');
 	});
 
 	// once socket is listening on the port
 	// call our callback function and continue
 	// the program's execution
 	socket.on('listening', function() {
-		log('udp_socket> Listening on port ' + config.mavlink.port);
+		utils.log('udp_socket> Listening on port ' + config.mavlink.port);
 		callback.call(socket);
 	});
 
 	socket.on('close', function() {
-		log('udp_socket> Socket connection closed.');
+		utils.log('udp_socket> Socket connection closed.');
 	});
 
 	socket.on('error', function(error) {
-		log('ERR udp_socket> ' + error.toString());
+		utils.log('ERR udp_socket> ' + error.toString());
 	});
 
 	socket.on('message', function(message, rinfo) {
 		mavlink.incoming.parse(message);
 	});
-
-}
-
-/**
- * authenticate with auvsi server
- */
-function auvsi_do_auth() {
-
-	var query = 'username=' + config.auvsi.username + '&password=' + config.auvsi.password;
-
-	var request = http.request({
-		method: 'POST',
-		path: '/api/login',
-		host: config.auvsi.host,
-		port: config.auvsi.port,
-		headers: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'Content-Length': query.length
-		}
-	});
-
-	request.on('response', function(response) {
-		auvsi_util_parse_response(response, function(data) {
-
-			// if server returns successful connection
-			// 	set auth cookie as global variable and
-			// 	call interoperability functions
-			// else advertise invalid login data
-			if(data == 'Login Successful.') {
-
-				auvsi_suas_auth_cookie = response.headers['set-cookie'][0];
-				auvsi_get_info(auvsi_suas_auth_cookie);
-				auvsi_get_obstacles(auvsi_suas_auth_cookie);
-
-				// add auvsi_post_telemetry function to callbacks_mavlink_received
-				// it runs every time a new message is received
-				////-- DISABLE posting
-				// callbacks_mavlink_received.push(auvsi_post_telemetry);
-
-			} else {
-				log('ERR auvsi>function>auth> ' + data);
-			}
-
-		});
-	});
-
-	request.on('error', function(error) {
-
-		// if auvsi server is down, keep trying
-		// to connect every 3 seconds until it's up
-		// max number of attempts is 100
-		if(error.code == 'ECONNREFUSED') {
-
-			if(!auvsi_do_auth.timeout_attempts) {
-				auvsi_do_auth.timeout_attempts = 0;
-			}
-
-			auvsi_do_auth.timeout_attempts++;
-
-			if(auvsi_do_auth.timeout_attempts > 100) {
-				return log('ERR auvsi>function>auth> Maximum number of login attempts exceeded. Unable to establish a connection to auvsi server.');
-			}
-
-			log('WARN auvsi>function>auth> Unable to connect to auvsi server. Retrying...');
-			
-			clearTimeout(auvsi_do_auth.timeout);
-			auvsi_do_auth.timeout = setTimeout(auvsi_do_auth, 3000);
-			
-		} else {
-			log('ERR auvsi>function>auth> ' + error.toString());
-		}
-
-	});
-
-	request.end(query);
-
-}
-
-/**
- * GET auvsi obstacle list, server time, message, message timestamp
- */
-function auvsi_get_info(cookie) {
-
-	var server_data_timeout = setTimeout(function sdt() {
-
-		var request = http.request({
-			method: 'GET',
-			path: '/api/server_info',
-			host: config.auvsi.host,
-			port: config.auvsi.port,
-			headers: {
-				'Cookie': cookie
-			}
-		});
-
-		request.on('response', function(response) {
-			auvsi_util_parse_response(response, function(data) {
-
-				if(!data) {
-					return console.log('API ERR /api/server_info ' + data);
-				}
-
-				try {
-
-					var server_time;
-
-					server_data = JSON.parse(data);
-					// console.log('DATA', server_data);
-					// server_time = server_data['server_time'];
-					// server_data = server_data['server_info'];
-					// server_data['server_time'] = server_time;
-
-					// 
-
-					for(var i in socket_io_clients) {
-						socket_io_clients[i].emit('server_info', server_data);
-					}
-
-				} catch(e) {
-					log('API ERR /api/server_info -> ' + e);
-				}
-
-			});
-		});
-
-		request.on('error', function(error) {
-			log('ERR auvsi_get_info() failure> ' + error.toString());
-		});
-
-		request.end();
-
-		clearTimeout(server_data_timeout);
-		var server_data_timeout = setTimeout(sdt, 1000);
-
-	}, 100);
-
-}
-
-/**
- * fetch sda obstacle data from auvsi server requires
- * authorization cookie as the first parameter.
- */
-function auvsi_get_obstacles(cookie) {
-
-	var obstacle_data_timeout = setTimeout(function odt() {
-
-		var request = http.request({
-			method: 'GET',
-			path: '/api/obstacles',
-			host: config.auvsi.host,
-			port: config.auvsi.port,
-			headers: {
-				'Cookie': cookie
-			}
-		});
-
-		request.on('response', function(response) {
-			auvsi_util_parse_response(response, function(data) {
-
-				try {
-
-					obstacle_data = JSON.parse(data);
-
-					// send obstacle data as a json object to localhost clients
-					for(var i in socket_io_clients) {
-						socket_io_clients[i].emit('obstacle_data', obstacle_data);
-					}
-
-					// convert obstacle object into mavlink waypoints message and send it to
-					// groundstation here
-
-				} catch(e) {
-					log(e);
-				}
-
-			});
-
-		});
-
-		request.on('error', function(error) {
-			log('ERR auvsi>function>obstacles> ' + error.toString());
-		});
-
-		request.end();
-
-		clearTimeout(obstacle_data_timeout);
-		obstacle_data_timeout = setTimeout(odt, 1000);
-
-	}, 100);
-
-}
-
-/**
- * post waypoints received from ground station to auvsi server
- * at 10Hz
- */
-function auvsi_post_telemetry(cookie) {
-	
-	// holds our loop object
-	var task = null;
-	var query = 'latitude=' + telemetry.latitude + '&longitude=' + telemetry.longitude + '&altitude_msl=' + telemetry.altitude_msl + '&uas_heading=' + telemetry.uas_heading;
-	var post_telemetry_called = false;
-
-	// loop request every 100ms
-	// setTimeout(function post_telemetry() {
-		
-		// update query
-		query = 'latitude=' + telemetry.latitude + '&longitude=' + telemetry.longitude + '&altitude_msl=' + telemetry.altitude_msl + '&uas_heading=' + telemetry.uas_heading;
-
-		if(mavlink.has_received_message()) {
-
-			// establish http connection to the auvsi uas server
-			var request = http.request({
-				method: 'POST',
-				path: '/api/telemetry',
-				host: config.auvsi.host,
-				port: config.auvsi.port,
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-					'Content-Length': query.length,
-					'Cookie': cookie
-				}
-			});
-
-			request.on('response', function(response) {
-				auvsi_util_parse_response(response, function(data) {
-
-					if(data == 'UAS Telemetry Successfully Posted.') {
-
-						if(previous_mavlink_time_boot == mavlink_time_boot) {
-							log('No new telemetry received. Posting previously received telemetry...');
-						} else {
-							log('Successfully posted updated telemetry.');
-						}
-
-						previous_mavlink_time_boot = mavlink_time_boot;
-
-					} else {
-						log('ERR auvsi>function>telemetry> ' + data);
-					}
-
-				});
-			});
-
-			request.on('error', function(error) {
-				log('ERR auvsi>function>telemetry> ' + error.toString());
-			});
-
-			request.end(query);
-
-		} else {
-			log('WARN auvsi>function>telemetry> Awaiting mavlink telemetry...');
-		}
-
-		// clearTimeout(task);
-		// task = setTimeout(post_telemetry, 100);
-
-	// }, 100);
-
-}
-
-/**
- * parse body of an http response and return response data
- */
-function auvsi_util_parse_response(response, callback) {
-
-	var data = '';
-
-	response.on('data', function(chunk) {
-		data += chunk;
-	});
-
-	response.on('end', function() {
-		callback.call(socket, data);
-	});
-
-}
-
-/**
- * Custom log function. Handles
- * repetitive logging and log caching
- */
-function log(message) {
-
-	if(!log.lastMessage) {
-		log.lastMessage = null;
-	}
-
-	if(message == log.lastMessage) {
-		return false;
-	}
-
-	console.log(message);
-	log.lastMessage = message;
-
-	return true;
 
 }
 
@@ -747,7 +450,7 @@ function handleAPIRequest(request, response, path) {
 
 	if(path.match(/\/api\/grid/gi)) {
 
-		var grid = api.get_grid_details(telemetry.get_telemetry(), waypoints);
+		var grid = api.get_grid_details(telemetry, waypoints);
 
 		try {
 			response.end(JSON.stringify(grid));
@@ -817,16 +520,8 @@ server.on('error', function (e) {
 
 io.listen(server).on('connection', function(client) {
 
-	log('socket.io>client> ' + client.id + ' has connected');
+	utils.log('socket.io>client> ' + client.id + ' has connected');
 	socket_io_clients[client.id] = client;
-
-	if(server_data) {
-		client.emit('server_info', server_data);
-	}
-
-	if(obstacle_data) {
-		client.emit('obstacle_data', obstacle_data);
-	}
 
 	client.on('disconnect', function() {
 		delete socket_io_clients[client.id];
