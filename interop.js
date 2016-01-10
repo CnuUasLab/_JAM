@@ -14,16 +14,16 @@
 
 var http 						= require('http');
 var fs 							= require('fs');
-var io 							= require('socket.io');
 
 var utils 						= require('./utils.js');
 var auvsi 						= require('./auvsi.js');
-var mavlink 					= require('./mavl.js');
 var api 						= require('./api.js');
+var mavlink 					= require('./mavl.js');
 var mission 					= require('./mission.js');
 var telemetry 					= require('./telemetry.js');
 var waypoints 					= require('./waypoints.js');
 var libsock 					= require('./libsock.js');
+var server 						= require('./server.js');
 var config 						= require('./config.js');
 
 /**
@@ -42,6 +42,50 @@ function init_listeners() {
 
 	libsock.on('message', function(message, rinfo) {
 		mavlink.incoming.parse(message);
+	});
+
+	// subscribe to websocket connection events
+	server.on('connection', function(client) {
+
+		utils.log('server>client> ' + client.id + ' has connected');
+		libsock.io_register(client.id, client);
+
+		client.on('disconnect', function() {
+			libsock.io_unregister(client.id);
+		});
+
+	});
+
+	// subscribe to http request events
+	server.on('request', function(request, response, path) {
+
+		if(path.match(/\/api\/.*/gi)) {
+			
+			if(path.match(/\/api\/grid/gi)) {
+				return server.receive_api_grid_request(request, response, 
+					api.get_grid_details(telemetry, waypoints));
+			}
+
+			if(path.match(/\/api\/path/gi)) {
+				return server.receive_api_path_request(request, response);
+			}
+
+			return server.receive_api_request(request, response, server.REQUEST_API_IS_INVALID);
+		}
+
+		server.receive_request(request, response, path);
+
+	});
+
+	server.on('error', function(e) {
+
+		if (e.code == 'EADDRINUSE') {
+			console.log('ERROR: http server port already in use, exiting');
+			process.exit(1);
+		} else {
+			console.log('ERROR: Error in http server ' + e);
+		}
+
 	});
 
 	// subscribe to auvsi server info events
@@ -66,7 +110,6 @@ function init_listeners() {
 
 	// listen for response after sending MISSION_REQUEST_LIST message
 	mavlink.incoming.on('MISSION_COUNT', function(message, fields) {
-		utils.log('mavlink>MISSION_COUNT> received mission count response.');
 		mission.receive_waypoint_count(fields.count);
 	});
 
@@ -179,96 +222,9 @@ function init_listeners() {
 	mavlink.init(function() {
 		libsock.init(function() {
 			auvsi.init();
+			server.init();
 			init_listeners();
 		});
 	});
 
 })();
-
-/**
- * Incoming /api/* requests handled here
- */
-function handleAPIRequest(request, response, path) {
-
-	response.writeHead(200, {'Content-Type': 'application/json'});
-
-	if(path.match(/\/api\/grid/gi)) {
-
-		var grid = api.get_grid_details(telemetry, waypoints);
-
-		try {
-			response.end(JSON.stringify(grid));
-		} catch(e) {
-			response.writeHead(500, {'Content-Type': 'text/plain'});
-			response.end(e.toString());
-		}
-
-		return;
-	}
-
-	if(path.match(/\/api\/path/gi) && request.type.toLowerCase() == 'put') {
-
-		response.end();
-		return;
-
-	}
-
-	// assume invalid request
-	response.writeHead(404, {'Content-Type': 'text/plain'});
-	response.end('Invalid endpoint.');
-
-}
-
-var server_router = {
-	'/': '/index.html',
-	'/map': '/map_app/index.html'
-};
-
-// create server for web pages
-var server = http.createServer(function(request, response) {
-
-	var path = server_router[request.url] || request.url;
-	console.log('serving ' + path);
-
-	if(path.match(/\/api\/.*/gi)) {
-		
-		handleAPIRequest(request, response, path);
-
-		return;
-	}
-
-	fs.readFile(__dirname + path, function(err, data) {
-
-		if(err) {
-			response.writeHead(404);
-			return response.end('404. File not found.');
-		}
-
-		response.writeHead(200, { 'Content-Type': 'text/html' });
-		response.end(data);
-
-	});
-
-});
-
-server.listen(8000, '0.0.0.0');
-
-server.on('error', function (e) {
-	if (e.code == 'EADDRINUSE') {
-		console.log('ERROR: http server port already in use, exiting');
-		process.exit(1);
-	} else {
-		console.log('ERROR: Error in http server ' + e);
-	}
-});
-
-io.listen(server).on('connection', function(client) {
-
-	utils.log('socket.io>client> ' + client.id + ' has connected');
-	libsock.io_register(client.id, client);
-
-	client.on('disconnect', function() {
-		libsock.io_unregister(client.id);
-	});
-
-});

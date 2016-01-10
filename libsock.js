@@ -36,12 +36,8 @@ var libsock = {
 		// call our callback function and continue
 		// the program's execution
 		socket.on('listening', function() {
-
-			utils.log('libsock>' + config.get_config('mavlink').incoming_port + '> ready.');
-
 			callback.call(socket, config.get_config('mavlink').incoming_host, config.get_config('mavlink').incoming_port);
 			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_READY, [config.get_config('mavlink').incoming_host, config.get_config('mavlink').incoming_port]);
-
 		});
 
 		socket.on('close', function() {

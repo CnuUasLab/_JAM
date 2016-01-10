@@ -31,6 +31,11 @@ var settings = {
 	"grid": {
 		"grid_width": 100,
 		"grid_padding_height": 10
+	},
+
+	"http": {
+		"host": "0.0.0.0",
+		"port": 8000
 	}
 
 };
