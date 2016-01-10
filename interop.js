@@ -27,21 +27,14 @@ var config = {
 };
 
 var http 						= require('http');
-var io 							= require('socket.io');
 var fs 							= require('fs');
-var socket 						= require('dgram').createSocket('udp4');
 
 var utils 						= require('./utils.js');
 var mavlink 					= require('./mavl.js');
 var api 						= require('./api.js');
 var telemetry 					= require('./telemetry.js');
 var waypoints 					= require('./waypoints.js');
-
-var mavlink_isReady 			= false;
-var mavlink_outgoing_isReady 	= false;
-
-// socket.io
-var socket_io_clients 			= {};
+var libsock 					= require('./libsock.js');
 
 var received_mission_count = false;
 
@@ -54,37 +47,13 @@ var request_mission_item_isFinished = false;
 // list is complete
 var request_mission_item_list_temp = {};
 
-// callbacks
-callbacks_mavlink_onready 		= [];
-callbacks_mavlink_outgoing_onready = [];
-
-// mavlink finishes loading definitions
-mavlink.incoming.on('ready', function() {
-
-	mavlink_isReady = true;	
-
-	for(var i = 0; i < callbacks_mavlink_onready.length; i++) {
-		callbacks_mavlink_onready[i].call(mavlink);
-	}
-
-});
-
-mavlink.outgoing.on('ready', function() {
-
-	mavlink_outgoing_isReady = true;
-
-	for(var i = 0; i < callbacks_mavlink_outgoing_onready.length; i++) {
-		callbacks_mavlink_outgoing_onready[i].call(mavlink_outgoing);
-	}
-
-});
-
 // init application by reading config file
 read_config_file('./config.json', function() {
 
 	// set user module configuration
 	api.set_config(config.grid);
 	auvsi.set_config(config.auvsi);
+	libsock.set_config(config.mavlink);
 
 	init();
 
@@ -168,48 +137,31 @@ function read_config_file(filepath, callback) {
  */
 function init() {
 
-	// determine if mavlink ready event has already been fired
-	if(mavlink_isReady) {
-		mavlink_init_listeners();
-	} else {
-		callbacks_mavlink_onready.push(mavlink_init_listeners);
-	}
-
-	if(mavlink_isReady && mavlink_outgoing_isReady) {
-		request_mission_items();
-	} else {
-		callbacks_mavlink_outgoing_onready.push(request_mission_items);	
-	}
+	mavlink.init(function() {
+		libsock.init(function() {
+			auvsi.init();
+			init_listeners();
+		});
+	});
 
 }
 
-function mavlink_init_listeners() {
+function init_listeners() {
 
-	utils.log('mavlink> ready.');
+	utils.log('interop> ready.');
 
-	// bind udp socket between computer and
-	// groundstation and begin communications
-	// with auvsi server
-	bind_udp_socket(function() {
-		auvsi.init();
+	libsock.on('message', function(message, rinfo) {
+		mavlink.incoming.parse(message);
 	});
 
 	// subscribe to auvsi server info events
 	auvsi.on('info', function(data) {
-
-		for(var i in socket_io_clients) {
-			socket_io_clients[i].emit('server_info', data);
-		}
-
+		libsock.io_broadcast('server_info', data);
 	});
 
 	// subscribe to auvsi obstacle events
 	auvsi.on('obstacles', function(data) {
-
-		for(var i in socket_io_clients) {
-			socket_io_clients[i].emit('obstacle_data', data);
-		}
-
+		libsock.io_broadcast('obstacle_data', data);
 	});
 
 	var telemetryCount = 0;
@@ -331,13 +283,10 @@ function mavlink_init_listeners() {
 		auvsi.post_telemetry(telemetry, mavlink);
 
 		// send mavlink event to all socket.io clients
-		for(var i in socket_io_clients) {
-
-			if(telemetryCountUpdated) {
-				socket_io_clients[i].emit('frequency_status', { frequency: lastTelemetryFreq });
-			}
-
-			socket_io_clients[i].emit('mavlink', telemetry);
+		libsock.io_broadcast('mavlink', telemetry);
+		
+		if(telemetryCountUpdated) {
+			libsock.io_broadcast('frequency_status', { frequency: lastTelemetryFreq });
 		}
 		
 	});
@@ -415,29 +364,7 @@ function request_mission_item(count, limit) {
 
 function bind_udp_socket(callback) {
 
-	socket.bind(config.mavlink.port, config.mavlink.host, function() {
-		utils.log('udp_socket> Socket connection established.');
-	});
-
-	// once socket is listening on the port
-	// call our callback function and continue
-	// the program's execution
-	socket.on('listening', function() {
-		utils.log('udp_socket> Listening on port ' + config.mavlink.port);
-		callback.call(socket);
-	});
-
-	socket.on('close', function() {
-		utils.log('udp_socket> Socket connection closed.');
-	});
-
-	socket.on('error', function(error) {
-		utils.log('ERR udp_socket> ' + error.toString());
-	});
-
-	socket.on('message', function(message, rinfo) {
-		mavlink.incoming.parse(message);
-	});
+	////--
 
 }
 
@@ -521,10 +448,10 @@ server.on('error', function (e) {
 io.listen(server).on('connection', function(client) {
 
 	utils.log('socket.io>client> ' + client.id + ' has connected');
-	socket_io_clients[client.id] = client;
+	libsock.io_register(client.id, client);
 
 	client.on('disconnect', function() {
-		delete socket_io_clients[client.id];
+		libsock.io_unregister(client.id);
 	});
 
 });

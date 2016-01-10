@@ -1,0 +1,133 @@
+/**
+ * Socket / websocket utils library. Handles outgoing and incoming messages
+ */
+
+var utils = require('./utils.js');
+var socket = require('dgram').createSocket('udp4');
+var io = require('socket.io');
+
+var libsock = {
+
+	config: {
+		host: 0,
+		port: 0
+	},
+
+	EVENT_KEY_ON_LIBSOCK_READY: 'ready',
+	EVENT_KEY_ON_LIBSOCK_BIND: 'bind',
+	EVENT_KEY_ON_LIBSOCK_MESSAGE: 'message',
+	EVENT_KEY_ON_LIBSOCK_CLOSE: 'close',
+	EVENT_KEY_ON_LIBSOCK_ERROR: 'close',
+
+	socketio_clients: {},
+	callbacks: {},
+
+	/**
+	 * Bind socket to specified ip address and port
+	 *
+	 * @emits libsock.EVENT_KEY_ON_LIBSOCK_READY
+	 */
+	init: function(callback) {
+
+		if(typeof callback != 'function') {
+			callback = function() {};
+		}
+
+		socket.bind(libsock.config.port, libsock.config.host, function() {
+			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_BIND, []);
+		});
+
+		// once socket is listening on the port
+		// call our callback function and continue
+		// the program's execution
+		socket.on('listening', function() {
+
+			utils.log('libsock>' + libsock.config.port + '> ready.');
+
+			callback.call(socket, libsock.config.host, libsock.config.port);
+			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_READY, [libsock.config.host, libsock.config.port]);
+
+		});
+
+		socket.on('close', function() {
+			utils.log('libsock> Socket connection closed.');
+			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_CLOSE, []);
+		});
+
+		socket.on('error', function(error) {
+			utils.log('ERR libsock> ' + error.toString());
+			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_ERROR, [error]);
+		});
+
+		socket.on('message', function(message, rinfo) {
+			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_MESSAGE, [message, rinfo]);
+		});
+
+	},
+
+	/**
+	 * Sends data to all connected socket.io clients
+	 *
+	 * @param bcast_id 	String 	with id of broadcast message
+	 * @param data 		Object 	containing data to send to clients
+	 */
+	io_broadcast: function(bcast_id, data) {
+
+		for(var i in libsock.socketio_clients) {
+			libsock.socketio_clients[i].emit(bcast_id, data);
+		}
+
+	},
+
+	/**
+	 * Register new client to be sent application events
+	 *
+	 * @param client_id 	String 	with hash of client connection
+	 * @param client 		Object 	containing client connection data
+	 */
+	io_register: function(client_id, client) {
+		libsock.socketio_clients[client_id] = client;
+	},
+
+	/**
+	 * Delete client previously signed up to receive socket events
+	 *
+	 * @param client_id 	String 	with hash of client connection
+	 */
+	io_unregister: function(client_id) {
+		delete libsock.socketio_clients[client_id];
+	},
+
+	on: function(evtKey, callback) {
+
+		if(!libsock.callbacks[evtKey]) {
+			libsock.callbacks[evtKey] = [];
+		}
+
+		libsock.callbacks[evtKey].push(callback);
+
+	},
+
+	emit: function(evtKey, params) {
+
+		if(!libsock.callbacks[evtKey]) {
+			return;
+		}
+
+		if(!(params instanceof Array)) {
+			params = [params];
+		}
+
+		for(var i = 0; i < libsock.callbacks[evtKey].length) {
+			libsock.callbacks[evtKey][i].apply(libsock, params);
+		}
+
+	},
+
+	set_config: function(config) {
+		libsock.config = config;
+	}
+
+};
+
+module.exports = libsock;

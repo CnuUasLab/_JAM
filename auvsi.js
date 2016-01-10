@@ -268,7 +268,13 @@ var auvsi = {
 	 * Initialize auvsi module and auvsi api requests.
 	 * Loops ten times per second retrieving api data.
 	 */
-	init: function() {
+	init: function(callback) {
+
+		if(typeof callback != 'function') {
+			callback = function() {};
+		}
+
+		callback.call(auvsi);
 
 		auvsi.auth(function(err) {
 
