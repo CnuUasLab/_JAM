@@ -4,14 +4,9 @@
 
 var utils = require('./utils.js');
 var socket = require('dgram').createSocket('udp4');
-var io = require('socket.io');
+var config = require('./config.js');
 
 var libsock = {
-
-	config: {
-		host: 0,
-		port: 0
-	},
 
 	EVENT_KEY_ON_LIBSOCK_READY: 'ready',
 	EVENT_KEY_ON_LIBSOCK_BIND: 'bind',
@@ -33,7 +28,7 @@ var libsock = {
 			callback = function() {};
 		}
 
-		socket.bind(libsock.config.port, libsock.config.host, function() {
+		socket.bind(config.get_config('mavlink').incoming_port, config.get_config('mavlink').incoming_host, function() {
 			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_BIND, []);
 		});
 
@@ -42,10 +37,10 @@ var libsock = {
 		// the program's execution
 		socket.on('listening', function() {
 
-			utils.log('libsock>' + libsock.config.port + '> ready.');
+			utils.log('libsock>' + config.get_config('mavlink').incoming_port + '> ready.');
 
-			callback.call(socket, libsock.config.host, libsock.config.port);
-			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_READY, [libsock.config.host, libsock.config.port]);
+			callback.call(socket, config.get_config('mavlink').incoming_host, config.get_config('mavlink').incoming_port);
+			libsock.emit(libsock.EVENT_KEY_ON_LIBSOCK_READY, [config.get_config('mavlink').incoming_host, config.get_config('mavlink').incoming_port]);
 
 		});
 
@@ -77,6 +72,20 @@ var libsock = {
 			libsock.socketio_clients[i].emit(bcast_id, data);
 		}
 
+	},
+
+	/**
+	 * Wrapper method for socket.send. Sends message to target host
+	 *
+	 * @param buffer 		Buffer 	to be sent to target host
+	 * @param buff_start 	int 	defining buffer index containing beginning of content
+	 * @param buff_end 		int 	defining buffer index containing end of content
+	 * @param target_port 	Integer containing port of target host
+	 * @param target_ip 	String	containing ip address of target host
+	 * @param callback 		Function to be called on buffer sent
+	 */
+	send: function(buffer, buff_start, buff_end, target_port, target_ip, callback) {
+		socket.send(buffer, buff_start, buff_end, target_port, target_ip, callback);
 	},
 
 	/**
@@ -118,14 +127,10 @@ var libsock = {
 			params = [params];
 		}
 
-		for(var i = 0; i < libsock.callbacks[evtKey].length) {
+		for(var i = 0; i < libsock.callbacks[evtKey].length; i++) {
 			libsock.callbacks[evtKey][i].apply(libsock, params);
 		}
 
-	},
-
-	set_config: function(config) {
-		libsock.config = config;
 	}
 
 };

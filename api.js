@@ -4,13 +4,9 @@
 
 var libmath = require('./libmath.js');
 var grid 	= require('./grid.js');
+var config 	= require('./config.js');
 
 var api = {
-
-	config: {
-		grid_width: 0,
-		grid_padding_height: 0
-	},
 
 	/* Get current grid information for DROPS.
 	 *
@@ -23,7 +19,7 @@ var api = {
 		var nextWaypoint = waypoints.get_next_waypoint()
 		var followingWaypoint = waypoints.get_following_waypoint();
 
-		grid.set_width(api.get_config('grid_width'));
+		grid.set_width(config.get_config('grid').grid_with);
 
 		// calculate distance from last waypoint to next
 		// waypoint padding also added to grid begin / end
@@ -31,13 +27,13 @@ var api = {
 			
 			grid.set_height(
 				grid.set_goal_lon(libmath.get_distance(prevWaypoint, nextWaypoint) 
-					+ (api.get_config('grid_padding_height'))
+					+ (config.get_config('grid').grid_padding_height)
 				)
 			);
 			
-			grid.get_grid().grid_height += (api.get_config('grid_padding_height'));
+			grid.get_grid().grid_height += (config.get_config('grid').grid_padding_height);
 
-			grid.set_goal_lat(api.get_config('grid_width') / 2);
+			grid.set_goal_lat(config.get_config('grid').grid_with / 2);
 
 		}
 
@@ -57,8 +53,8 @@ var api = {
 			theta += 360;
 		}
 
-		grid.set_location_lat(location.x + (api.get_config('grid_width') / 2));
-		grid.set_location_lon(location.y + api.get_config('grid_padding_height'));
+		grid.set_location_lat(location.x + (config.get_config('grid').grid_with / 2));
+		grid.set_location_lon(location.y + config.get_config('grid').grid_padding_height);
 		grid.set_location_theta(theta);
 
 		return grid.get_grid();
@@ -74,26 +70,6 @@ var api = {
 	put_path: function() {
 		// TODO
 		return 0;
-	},
-
-	set_config: function(config_object, prop_value) {
-
-		if(typeof config_object == 'string') {
-			api.config[config_object] = prop_value;
-			return api.config[config_object];
-		}
-
-		api.config = config_object;
-		return api.config;
-	},
-
-	get_config: function(conf_key) {
-
-		if(conf_key) {
-			return api.config[conf_key];
-		}
-
-		return api.config;
 	}
 
 };

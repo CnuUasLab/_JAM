@@ -3,6 +3,7 @@
  */
 
 var Mavlink = require('mavlink');
+var config = require('./config.js');
 
 var mavl = {
 
@@ -12,7 +13,7 @@ var mavl = {
 	_is_incoming_ready: false,
 	_is_outgoing_ready: false,
 
-	EVENT_KEY_ON_MAVL_READY = 'ready',
+	EVENT_KEY_ON_MAVL_READY: 'ready',
 
 	time_boot: null,
 	previous_time_boot: null,
@@ -115,7 +116,12 @@ var mavl = {
 	/**
 	 * Handles socket message dispatches.
 	 *
-	 * @param libsock Object 	socket library
+	 * @param libsock 		Object 	socket library
+	 * @param message_type 	String 	type of mavlink message
+	 * @param message_body 	Object 	in json format containing message contents
+	 * @param target_ip 	String 	containing ip address of target host
+	 * @param target_port 	Integer	containing port of target host
+	 * @param callback 		Function to be called on message sent
 	 */
 	send_message: function(libsock, message_type, message_body, target_ip, target_port, callback) {
 
@@ -198,11 +204,11 @@ var mavl = {
 			params = [params];
 		}
 
-		for(var i = 0; i < mavl.callbacks[evtKey].length) {
+		for(var i = 0; i < mavl.callbacks[evtKey].length; i++) {
 			mavl.callbacks[evtKey][i].apply(mavl, params);
 		}
 
-	},
+	}
 
 };
 

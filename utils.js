@@ -4,22 +4,20 @@
 
 var utils = {
 
+	log_last_message: null,
+
 	/**
 	 * Custom log function. Handles
 	 * repetitive logging and log caching
 	 */
 	log: function(message) {
 
-		if(!log.lastMessage) {
-			log.lastMessage = null;
-		}
-
-		if(message == log.lastMessage) {
+		if(message == utils.log_last_message) {
 			return false;
 		}
 
 		console.log(message);
-		log.lastMessage = message;
+		utils.log_last_message = message;
 
 		return true;
 

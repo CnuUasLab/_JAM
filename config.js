@@ -1,74 +1,71 @@
 /**
  * Configuration library. Handles config file parsing.
- * Settings for this application should not be set here,
- * please use 'config.json' for that.
+ * Application must be restarted for changes to take place
  */
 
 var fs = require('fs');
+
+/**
+ * Change application settings using this object
+ * changes will be reflected across all modules
+ */
+var settings = {
+
+	"application": {
+		"in_production": false
+	},
+	"auvsi": {
+		"host": "10.10.130.10",
+		"port": 80,
+		"username": "newport-falcon",
+		"password": "3813418169"
+	},
+
+	"mavlink": {
+		"incoming_host": "0.0.0.0",
+		"incoming_port": 14551,
+		"outgoing_host": "home.nigelarmstrong.me",
+		"outgoing_port": 14552
+	},
+
+	"grid": {
+		"grid_width": 100,
+		"grid_padding_height": 10
+	}
+
+};
+
+/**
+ * If changing a setting, please do not alter object below
+ * it is only there to expose a config manager api
+ */
 
 var config = {
 
 	DEFAULT_CONFIG_FILE: './config.json',
 
-	settings: {
-
-		application: {},
-		auvsi: {},
-		mavlink: {},
-		grid: {}
-
+	set_setting: function(key, value) {
+		settings[key] = value;
 	},
 
-	parse_file: function(fpath, callback) {
-
-		fs.readFile(fpath, function(err, data) {
-
-			if(err) {
-				return callback.call(config, err.toString());
-			}
-
-			try {
-
-				var contents = JSON.parse(data);
-
-				for(var i in contents.application) {
-					config.settings.application[i] = contents.application[i];
-				}
-
-				for(var i in contents.auvsi) {
-					config.settings.auvsi[i] = contents.auvsi[i];
-				}
-
-				for(var i in contents.mavlink) {
-					config.settings.mavlink[i] = contents.mavlink[i];
-				}
-
-				for(var i in contents.grid) {
-					config.settings.grid[i] = contents.grid[i];
-				}
-
-				callback.call(config, null, config.settings);
-
-			} catch(err) {
-				callback.call(config, err.toString());
-			}
-
-		});
-
+	/**
+	 * Replaces entire config object with new one
+	 */
+	set_config: function(new_conf) {
+		settings = new_conf;
 	},
 
-	init: function(callback) {
+	/**
+	 * Retrieves entire config object, or
+	 * a specific property
+	 */
+	get_config: function(setting_id) {
 
-		if(typeof callback != 'function') {
-			callback = function() {};
+		if(setting_id) {
+			return settings[setting_id];
 		}
 
-		config.parse_file(config.DEFAULT_CONFIG_FILE, callback);
-
-	},
-
-	get_config: function(setting_id) {
-		return config.settings[setting_id];
+		return settings;
 	}
 
 };

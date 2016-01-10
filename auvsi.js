@@ -3,16 +3,12 @@
  * Supports subscribing to events for inter-object communication.
  */
 
+var http = require('http');
+
 var utils = require('./utils.js');
+var config = require('./config.js');
 
 var auvsi = {
-
-	config: {
-		host: "10.10.130.10",
-		port: 80,
-		username: "newport-falcon",
-		password: "3813418169"
-	},
 
 	connection: {
 		
@@ -30,13 +26,13 @@ var auvsi = {
 
 	callbacks: {},
 
-	CONNECTION_MAX_ATTEMPTS = 100,
-	RESPONSE_LOGIN_SUCCESS = 'Login Successful.',
+	CONNECTION_MAX_ATTEMPTS: 100,
+	RESPONSE_LOGIN_SUCCESS: 'Login Successful.',
 
 	// valid when server info is obtained
-	EVENT_KEY_ON_AUVSI_INFO = 'info',
-	EVENT_KEY_ON_AUVSI_AUTH = 'auth',
-	EVENT_KEY_ON_AUVSI_OBSTACLES = 'obstacles',
+	EVENT_KEY_ON_AUVSI_INFO: 'info',
+	EVENT_KEY_ON_AUVSI_AUTH: 'auth',
+	EVENT_KEY_ON_AUVSI_OBSTACLES: 'obstacles',
 
 	cookie: null,
 
@@ -48,13 +44,13 @@ var auvsi = {
 	 */
 	auth: function(callback) {
 
-		var query = 'username=' + auvsi.config.username + '&password=' + auvsi.config.password;
+		var query = 'username=' + config.get_config('auvsi').username + '&password=' + config.get_config('auvsi').password;
 
 		var request = http.request({
 			method: 'POST',
 			path: auvsi.connection.api_path_login,
-			host: auvsi.config.host,
-			port: auvsi.config.port,
+			host: config.get_config('auvsi').host,
+			port: config.get_config('auvsi').port,
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
 				'Content-Length': query.length
@@ -123,8 +119,8 @@ var auvsi = {
 
 			method: 'GET',
 			path: auvsi.connection.api_path_server_info,
-			host: auvsi.config.host,
-			port: auvsi.config.port,
+			host: config.get_config('auvsi').host,
+			port: config.get_config('auvsi').port,
 
 			headers: {
 				'Cookie': cookie
@@ -140,7 +136,7 @@ var auvsi = {
 				}
 
 				try {
-					auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_INFO, [JSON.parse(data);]);
+					auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_INFO, [JSON.parse(data)]);
 				} catch(e) {
 					utils.log('API ERR /api/server_info -> ' + e);
 				}
@@ -171,8 +167,8 @@ var auvsi = {
 
 			method: 'GET',
 			path: auvsi.api_path_obstacles,
-			host: auvsi.config.host,
-			port: auvsi.config.port,
+			host: config.get_config('auvsi').host,
+			port: config.get_config('auvsi').port,
 
 			headers: {
 				'Cookie': cookie
@@ -184,7 +180,7 @@ var auvsi = {
 			auvsi.get_response(response, function(data) {
 
 				try {
-					auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_OBSTACLES, [JSON.parse(data);]);
+					auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_OBSTACLES, [JSON.parse(data)]);
 				} catch(e) {
 					utils.log(e);
 				}
@@ -219,8 +215,8 @@ var auvsi = {
 
 				method: 'POST',
 				path: api_path_telemetry,
-				host: auvsi.config.host,
-				port: auvsi.config.port,
+				host: config.get_config('auvsi').host,
+				port: config.get_config('auvsi').port,
 
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
@@ -262,7 +258,7 @@ var auvsi = {
 			utils.log('WARN auvsi>function>telemetry> Awaiting mavlink telemetry...');
 		}
 
-	}
+	},
 
 	/**
 	 * Initialize auvsi module and auvsi api requests.
@@ -343,7 +339,7 @@ var auvsi = {
 			return;
 		}
 
-		if(!(data_array instanceof Array) {
+		if(!(data_array instanceof Array)) {
 			data_array = [data_array];
 		}
 
@@ -351,10 +347,6 @@ var auvsi = {
 			auvsi.callbacks[event_key].apply(this, data_array);
 		}
 
-	},
-
-	set_config: function(config) {
-		auvsi.config = config;
 	}
 
 };

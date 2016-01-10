@@ -153,7 +153,7 @@ var grid_methods = {
 	set_location_theta: function(value) {
 		grid.location.theta = value;
 		return value;
-	}
+	},
 
 	/**
 	 * Sets current plane's goal as waypoint
@@ -218,7 +218,7 @@ var grid_methods = {
 	set_goal_theta: function(value) {
 		grid.goal.theta = value;
 		return value;
-	}
+	},
 
 	get_grid: function() {
 		return grid;

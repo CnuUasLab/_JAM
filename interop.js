@@ -8,147 +8,37 @@
  * same udp socket used for receiving telemetry to send auvsi
  * server obstacle information to mavproxy groundstation.
  *
- * TODO: fetch auvsi obstacle and server data under a single setTimeout function
- * TODO: convert obstacle object list into waypoints and send it to autopilot
- *
  * @author juanvallejo
  * @date 6/20/15
  */
 
-/**
- * Store config file data
- */
-var config = {
-	application: {},
-	auvsi: {},
-	mavlink: {},
-	mavlink_outgoing: {},
-	grid: {}
-};
-
 var http 						= require('http');
 var fs 							= require('fs');
+var io 							= require('socket.io');
 
 var utils 						= require('./utils.js');
+var auvsi 						= require('./auvsi.js');
 var mavlink 					= require('./mavl.js');
 var api 						= require('./api.js');
+var mission 					= require('./mission.js');
 var telemetry 					= require('./telemetry.js');
 var waypoints 					= require('./waypoints.js');
 var libsock 					= require('./libsock.js');
-
-var received_mission_count = false;
-
-var request_mission_item_limit = 0;
-var request_mission_item_count = 0;
-var request_mission_item_isFinished = false;
-
-// temporary waypoint list stored here
-// assigned to waypoints.waypoints once
-// list is complete
-var request_mission_item_list_temp = {};
-
-// init application by reading config file
-read_config_file('./config.json', function() {
-
-	// set user module configuration
-	api.set_config(config.grid);
-	auvsi.set_config(config.auvsi);
-	libsock.set_config(config.mavlink);
-
-	init();
-
-});
-
-// used to talk back to the ground station
-// note: should only be used once socket is bound
-function send_mavlink(message_type, message_body, target_ip, target_port, callback) {
-
-	if(typeof callback != 'function') {
-		callback = function() {};
-	}
-
-	mavlink.outgoing.createMessage(message_type, message_body, function(message) {
-
-		socket.send(message.buffer, 0, message.buffer.length, target_port, target_ip, function(err, bytes) {
-
-			var response = 'Message sent.';
-
-			if(err) {
-				response = err;
-				callback.call(this, err, null);
-			} else {
-				callback.call(this, null, response);
-			}
-			
-		});
-		
-	});
-
-}
+var config 						= require('./config.js');
 
 /**
- * parse config file
+ * Initialize module event listeners
+ * Listen for mavlink messages and auvsi
+ * api data
  */
-function read_config_file(filepath, callback) {
-
-	fs.readFile(filepath, function(err, data) {
-
-		if(err) {
-			return utils.log('ERR config> Config file not read -> ' + err.toString());
-		}
-
-		try {
-
-			var contents = JSON.parse(data);
-
-			for(var i in contents.application) {
-				config.application[i] = contents.application[i];
-			}
-
-			for(var i in contents.auvsi) {
-				config.auvsi[i] = contents.auvsi[i];
-			}
-
-			for(var i in contents.mavlink) {
-				config.mavlink[i] = contents.mavlink[i];
-			}
-
-			for(var i in contents.mavlink_outgoing) {
-				config.mavlink_outgoing[i] = contents.mavlink_outgoing[i];
-			}
-
-			for(var i in contents.grid) {
-				config.grid[i] = contents.grid[i];
-			}
-
-			callback.call(config);
-
-		} catch(err) {
-			console.log('ERR config> Invalid config file syntax -> ' + err.toString());
-		}
-
-	});
-
-}
-
-/**
- * Start mavlink event listeners and initialize
- * rest of the application / modules
- */
-function init() {
-
-	mavlink.init(function() {
-		libsock.init(function() {
-			auvsi.init();
-			init_listeners();
-		});
-	});
-
-}
-
 function init_listeners() {
 
 	utils.log('interop> ready.');
+
+	var telemetryCount = 0;
+	var lastTelemetryFreq = 0;
+	var telemetryCountUpdated = false;
+	var futureTime = (Date.now() / 1000) + 1;
 
 	libsock.on('message', function(message, rinfo) {
 		mavlink.incoming.parse(message);
@@ -164,24 +54,20 @@ function init_listeners() {
 		libsock.io_broadcast('obstacle_data', data);
 	});
 
-	var telemetryCount = 0;
-	var lastTelemetryFreq = 0;
-	var telemetryCountUpdated = false;
-	var futureTime = (Date.now() / 1000) + 1;
+	// subscribe to mission waypoints received events
+	mission.on('waypoints', function(data) {
+		waypoints.set_waypoints(data);
+	});
+
+	// handle mission errors
+	mission.on('error', function(err) {
+		utils.log(err);
+	});
 
 	// listen for response after sending MISSION_REQUEST_LIST message
 	mavlink.incoming.on('MISSION_COUNT', function(message, fields) {
-
 		utils.log('mavlink>MISSION_COUNT> received mission count response.');
-
-		if(!received_mission_count) {
-			received_mission_count = true;
-		}
-
-		request_mission_item_limit = fields.count;
-		request_mission_item_count = 0;
-		request_mission_item(request_mission_item_count, request_mission_item_limit);
-
+		mission.receive_waypoint_count(fields.count, libsock);
 	});
 
 	// retireve current waypoint
@@ -198,10 +84,10 @@ function init_listeners() {
 		} else {
 
 			// assume no waypoints have been requested / loaded
-			if(!received_mission_count) {
-				clearTimeout(request_mission_items.timeout);
-				request_mission_items();
+			if(!mission.is_received_waypoint_count()) {
+				mission.request_waypoints(mavlink, libsock);
 			}
+
 		}
 
 	});
@@ -210,21 +96,11 @@ function init_listeners() {
 	 * Handle waypoint data from GCS
 	 */
 	mavlink.incoming.on('MISSION_ITEM', function(message, fields) {
-
-		request_mission_item_count++;
-
-		request_mission_item_list_temp[fields.seq] = fields;
-
-		if(!request_mission_item_isFinished) {
-			request_mission_item(request_mission_item_count, request_mission_item_limit);
-		} else {
-			onMissionItemsReceived(request_mission_item_list_temp);
-		}
-
+		mission.receive_waypoint(fields, libsock);
 	});
 
 	mavlink.incoming.on('STATUSTEXT', function(message, fields) {
-		console.log('received status text');
+		utils.log('mavl>incoming> received status text');
 	});
 
 	/**
@@ -293,80 +169,21 @@ function init_listeners() {
 
 }
 
-// assumes socket has been bound
-// begins the long, lenghty process of retrieving
-// and updating all of the mission waypoints
-function request_mission_items() {
+/**
+ * Start mavlink event listeners and initialize
+ * rest of the application / modules
+ */
+(function init() {
 
-	utils.log('mavlink> sending MISSION_REQUEST_LIST...');
-
-	var host = config.mavlink_outgoing.host;
-	var port = config.mavlink_outgoing.port;
-
-	send_mavlink('MISSION_REQUEST_LIST', {
-
-		'target_system': 1,
-		'target_component': 1
-
-	}, host, port, function(err, response) {
-
-		if(err) {
-			return console.log(err);
-		}
-
-		clearTimeout(request_mission_items.timeout);
-		request_mission_items.timeout = setTimeout(function() {
-
-			// throw error if received_mission_count == false in 30 secs
-			if(!received_mission_count) {
-				utils.log('ERROR>mavlink_outgoing>mission_request_list>', 'MISSION_COUNT not received in 30 seconds...');
-			}
-
-		}, 30000);
-
+	// set user module configuration
+	mavlink.init(function() {
+		libsock.init(function() {
+			auvsi.init();
+			init_listeners();
+		});
 	});
-}
 
-// called once all waypoints are received from the GCS
-function onMissionItemsReceived(tempMissionItems) {
-
-	// reset mission retrieval flags and temp array
-	clearTimeout(request_mission_items.timeout);
-	received_mission_count = false;
-
-	request_mission_item_limit = 0;
-	request_mission_item_count = 0;
-	request_mission_item_isFinished = false;
-
-	// our waypoints are stored here
-	waypoints.set_waypoints(request_mission_item_list_temp);
-	request_mission_item_list_temp = {};
-
-}
-
-function request_mission_item(count, limit) {
-
-	if(count == limit) {
-		request_mission_item_isFinished = true;
-	}
-
-	utils.log('request_mission_item> requesting item #' + count + ' / ' + limit);
-
-	send_mavlink('MISSION_REQUEST', {
-		'target_system': 1,
-		'target_component': 1,
-		'seq': count
-	}, config.mavlink_outgoing.host, config.mavlink_outgoing.port, function(err, response) {
-		utils.log('mavlink>MISSION_REQUEST> sent MISSION_ITEM request');
-	});	
-
-}
-
-function bind_udp_socket(callback) {
-
-	////--
-
-}
+})();
 
 /**
  * Incoming /api/* requests handled here

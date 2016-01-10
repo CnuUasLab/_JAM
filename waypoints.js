@@ -23,7 +23,7 @@ var waypoints = {
 
 	get_waypoints: function() {
 		return waypoints.waypoints;
-	}
+	},
 
 	get_last_waypoint: function() {
 		return waypoints.last_waypoint;
@@ -84,18 +84,10 @@ var waypoints = {
 
 	/**
 	 * Sets a collection of waypoints as the current
-	 * mission items. If any single waypoint in the
-	 * collection received differs from one already set
+	 * mission items.
 	 */
 	set_waypoints: function(waypts) {
-
 		waypoints.waypoints =  waypts;
-
-		// loop through waypoints and see if new ones differ
-		// from ones previosuly set, if true, set flag
-		for(var i = 0; i < waypts) {
-
-		}
 	},
 
 	is_changed: function(arg) {
