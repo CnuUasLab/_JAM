@@ -2,6 +2,8 @@
  * Mission library and utils
  */
 
+var socket = require('dgram').createSocket('udp4');
+
 var config = require('./config.js');
 var utils = require('./utils.js');
 
@@ -44,11 +46,9 @@ var mission = {
 	 * Called any time a waypoint is received
 	 *
 	 * @param waypoint
-	 * @param libsock 	Object 	socket manager, used to request a new waypoint by
-	 * 	using the mavlink outgoing socket to send a message to the ground station.
 	 * @emits mission.EVENT_KEY_ON_WAYPOINT
 	 */
-	receive_waypoint: function(waypoint, libsock) {
+	receive_waypoint: function(waypoint) {
 
 		mission.waypoints_count++;
 
@@ -56,7 +56,7 @@ var mission = {
 		mission.emit(mission.EVENT_KEY_ON_WAYPOINT);
 
 		if(!mission.waypoints_request_isFinished) {
-			mission.request_waypoint(mission.waypoints_count, libsock);
+			mission.request_waypoint(mission.waypoints_count);
 		} else {
 			mission.end_request_waypoints();
 		}
@@ -70,10 +70,8 @@ var mission = {
 	 * a mission.EVENT_KEY_ON_WAYPOINTS event is emitted.
 	 *
 	 * @param limit 	int 	total number of waypoints to request
-	 * @param libsock 	Object 	socket manager, used to request a new waypoint by
-	 * 	using the mavlink outgoing socket to send a message to the ground station.
 	 */
-	receive_waypoint_count: function(limit, libsock) {
+	receive_waypoint_count: function(limit) {
 
 		if(!mission.is_received_waypoint_count(true)) {
 			clearTimeout(mission.waypoints_request_timeout);
@@ -81,7 +79,7 @@ var mission = {
 
 		mission.waypoints_count_limit = limit;
 		mission.waypoints_count = 0;
-		mission.request_waypoint(0, libsock);
+		mission.request_waypoint(0);
 
 	},
 
@@ -92,7 +90,7 @@ var mission = {
  	 * @param libsock 	Object 	socket manager, used to request a new waypoint by
 	 * 	using the mavlink outgoing socket to send a message to the ground station.
 	 */
-	request_waypoint: function(count, libsock) {
+	request_waypoint: function(count) {
 
 		if(count == mission.waypoints_count_limit) {
 			mission.waypoints_request_isFinished = true;
@@ -100,7 +98,7 @@ var mission = {
 
 		utils.log('request_mission_item> requesting item #' + count + ' / ' + limit);
 
-		mavlink.send_message(libsock, 'MISSION_REQUEST', {
+		mavlink.send_message(socket, 'MISSION_REQUEST', {
 
 			'target_system': 1,
 			'target_component': 1,
