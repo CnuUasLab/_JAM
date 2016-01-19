@@ -238,7 +238,7 @@ var auvsi = {
 							utils.log('Successfully posted updated telemetry.');
 						}
 
-						mavlink.set_previous_time_boot(mavlink_time_boot);
+						mavlink.set_previous_time_boot(mavlink.get_time_boot());
 
 					} else {
 						utils.log('ERR auvsi>function>telemetry> ' + data);
