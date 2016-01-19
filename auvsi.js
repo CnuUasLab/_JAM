@@ -180,7 +180,8 @@ var auvsi = {
 			auvsi.get_response(response, function(data) {
 
 				try {
-					auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_OBSTACLES, [JSON.parse(data)]);
+					console.log(data);
+					// auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_OBSTACLES, [JSON.parse(data)]);
 				} catch(e) {
 					utils.log(e);
 				}
@@ -344,7 +345,7 @@ var auvsi = {
 		}
 
 		for(var i = 0; i < auvsi.callbacks[event_key].length; i++) {
-			auvsi.callbacks[event_key].apply(this, data_array);
+			auvsi.callbacks[event_key][i].apply(this, data_array);
 		}
 
 	}

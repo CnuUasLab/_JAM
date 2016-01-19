@@ -20,8 +20,8 @@ var server = {
 	REQUEST_API_IS_INVALID: true,
 
 	routes: {
-		'/': '/index.html',
-		'/map': '/map_app/index.html'
+		'/': '/views/index.html',
+		'/map': '/views/map.html'
 	},
 
 	callbacks: {},

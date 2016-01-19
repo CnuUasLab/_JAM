@@ -15,16 +15,16 @@ var settings = {
 		"in_production": false
 	},
 	"auvsi": {
-		"host": "10.10.130.10",
+		"host": "137.155.2.166",
 		"port": 80,
-		"username": "newport-falcon",
-		"password": "3813418169"
+		"username": "uas",
+		"password": "devel"
 	},
 
 	"mavlink": {
 		"incoming_host": "0.0.0.0",
 		"incoming_port": 14551,
-		"outgoing_host": "home.nigelarmstrong.me",
+		"outgoing_host": "137.155.2.166",
 		"outgoing_port": 14552
 	},
 

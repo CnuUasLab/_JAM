@@ -2,8 +2,6 @@
  * Mission library and utils
  */
 
-var socket = require('dgram').createSocket('udp4');
-
 var config = require('./config.js');
 var utils = require('./utils.js');
 
@@ -48,7 +46,7 @@ var mission = {
 	 * @param waypoint
 	 * @emits mission.EVENT_KEY_ON_WAYPOINT
 	 */
-	receive_waypoint: function(waypoint) {
+	receive_waypoint: function(libsock, waypoint) {
 
 		mission.waypoints_count++;
 
@@ -56,7 +54,7 @@ var mission = {
 		mission.emit(mission.EVENT_KEY_ON_WAYPOINT);
 
 		if(!mission.waypoints_request_isFinished) {
-			mission.request_waypoint(mission.waypoints_count);
+			mission.request_waypoint(libsock, mission.waypoints_count);
 		} else {
 			mission.end_request_waypoints();
 		}
@@ -71,7 +69,7 @@ var mission = {
 	 *
 	 * @param limit 	int 	total number of waypoints to request
 	 */
-	receive_waypoint_count: function(limit) {
+	receive_waypoint_count: function(libsock, limit) {
 
 		if(!mission.is_received_waypoint_count(true)) {
 			clearTimeout(mission.waypoints_request_timeout);
@@ -79,7 +77,7 @@ var mission = {
 
 		mission.waypoints_count_limit = limit;
 		mission.waypoints_count = 0;
-		mission.request_waypoint(0);
+		mission.request_waypoint(libsock, 0);
 
 	},
 
@@ -90,7 +88,7 @@ var mission = {
  	 * @param libsock 	Object 	socket manager, used to request a new waypoint by
 	 * 	using the mavlink outgoing socket to send a message to the ground station.
 	 */
-	request_waypoint: function(count) {
+	request_waypoint: function(libsock, count) {
 
 		if(count == mission.waypoints_count_limit) {
 			mission.waypoints_request_isFinished = true;
@@ -98,7 +96,7 @@ var mission = {
 
 		utils.log('request_mission_item> requesting item #' + count + ' / ' + limit);
 
-		mavlink.send_message(socket, 'MISSION_REQUEST', {
+		mavlink.send_message(libsock, 'MISSION_REQUEST', {
 
 			'target_system': 1,
 			'target_component': 1,
@@ -119,7 +117,7 @@ var mission = {
 	 * @emits mission.EVENT_KEY_ON_MISSION_ERROR if a response to
 	 *	waypoints request does not happen in less than 30 seconds.
 	 */
-	request_waypoints: function(mavlink, libsock) {
+	request_waypoints: function(libsock, mavlink) {
 
 		utils.log('mavlink> sending MISSION_REQUEST_LIST...');
 

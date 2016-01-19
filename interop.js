@@ -110,7 +110,7 @@ function init_listeners() {
 
 	// listen for response after sending MISSION_REQUEST_LIST message
 	mavlink.incoming.on('MISSION_COUNT', function(message, fields) {
-		mission.receive_waypoint_count(fields.count);
+		mission.receive_waypoint_count(libsock, fields.count);
 	});
 
 	// retireve current waypoint
@@ -128,7 +128,7 @@ function init_listeners() {
 
 			// assume no waypoints have been requested / loaded
 			if(!mission.is_received_waypoint_count()) {
-				mission.request_waypoints(mavlink);
+				mission.request_waypoints(libsock, mavlink);
 			}
 
 		}
@@ -139,7 +139,7 @@ function init_listeners() {
 	 * Handle waypoint data from GCS
 	 */
 	mavlink.incoming.on('MISSION_ITEM', function(message, fields) {
-		mission.receive_waypoint(fields);
+		mission.receive_waypoint(libsock, fields);
 	});
 
 	mavlink.incoming.on('STATUSTEXT', function(message, fields) {
