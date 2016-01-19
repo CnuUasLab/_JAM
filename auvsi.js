@@ -166,7 +166,7 @@ var auvsi = {
 		var request = http.request({
 
 			method: 'GET',
-			path: auvsi.api_path_obstacles,
+			path: auvsi.connection.api_path_obstacles,
 			host: config.get_config('auvsi').host,
 			port: config.get_config('auvsi').port,
 
@@ -180,8 +180,7 @@ var auvsi = {
 			auvsi.get_response(response, function(data) {
 
 				try {
-					console.log(data);
-					// auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_OBSTACLES, [JSON.parse(data)]);
+					auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_OBSTACLES, [JSON.parse(data)]);
 				} catch(e) {
 					utils.log(e);
 				}
@@ -215,7 +214,7 @@ var auvsi = {
 			var request = http.request({
 
 				method: 'POST',
-				path: api_path_telemetry,
+				path: auvsi.connection.api_path_telemetry,
 				host: config.get_config('auvsi').host,
 				port: config.get_config('auvsi').port,
 
