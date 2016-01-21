@@ -3,9 +3,7 @@
  * dependency for the application. Obsticle updates, and creations are
  * specified in methods, and functions.
  *
- *
  * @author davidkroell
- * @version 11/14/2015
  *
  */
 
@@ -180,9 +178,6 @@ function createMovingObsticle(lon, lat, id, size) {
     planeLayer.addFeatures(obst_mov);
 }
 
-
-//function to change the location of a moving obsticle which has already been created.
-
 /* -> is Obsolete
 function changeMovingObsticleLoc(lon, lat, id) {
 
@@ -223,8 +218,8 @@ function changeMovingObsticleLoc(lon, lat, id) {
 }
 */
 
-// TODO: Need to add a reference to the size of the obstacle in the data.
-    hasBeenCalled = false;
+// But, will obstacles rendomly appear while in-flight? If so: redesign..
+hasBeenCalled = false; 
 //display and wipe the moving obstacles
 function arrMovObst(Obstaclearr) {
     if (!hasBeenCalled) {
