@@ -235,14 +235,10 @@ function arrMovObst(Obstaclearr) {
         hasBeenCalled = true;
     }
 
-    wipeObstacleLayer();
+    Obst_Layer.removeAllFeatures();
     
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
         createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i, Obstaclearr.moving_obstacles[i].sphere_radius);
     }
 
-}
-
-function wipeObstacleLayer() {
-    Obst_Layer.removeAllFeatures();
 }
