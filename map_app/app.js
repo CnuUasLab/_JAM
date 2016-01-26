@@ -164,7 +164,7 @@ function createMovingObsticle(lon, lat, id, size) {
     obst_mov = new OpenLayers.Feature.Vector(
 		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
 		      {description: id},
-	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25}
+	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4), graphicXOffset:-12, graphicYOffset:-25}
     );
 
     //Creating JSON object to push to the Array
@@ -175,7 +175,7 @@ function createMovingObsticle(lon, lat, id, size) {
     };
 
     objectObstMov.Obsticles.push(obst_object);
-    planeLayer.addFeatures(obst_mov);
+    Obst_Layer.addFeatures(obst_mov);
 }
 
 /* -> is Obsolete
@@ -229,11 +229,15 @@ function arrMovObst(Obstaclearr) {
 
         hasBeenCalled = true;
     }
-
-    Obst_Layer.removeAllFeatures();
     
+    wipeObstacles();
+
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
         createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i, Obstaclearr.moving_obstacles[i].sphere_radius);
     }
 
+}
+
+function wipeObstacles() {
+    Obst_Layer.removeAllFeatures();
 }
