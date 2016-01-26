@@ -147,7 +147,7 @@ body {
 	var sm 	= document.getElementById('server-message');
 	var smt = document.getElementById('server-message-timestamp');
 
-	var socket = io.connect(window.location.href);
+	var socket = io.connect(window.location.origin);
 
 	if(window.location.pathname == '/map') {
 		overlay.style.display = 'none';
