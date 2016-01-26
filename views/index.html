@@ -112,7 +112,7 @@ body {
 <body>
 
 <div id="mapdiv"></div>
-<div class="overlay"></div>                                                     
+<div class="overlay" id="overlay"></div>                                                     
 
 <div id="telemetry-receive-frequency"><span id="freq">0</span>Hz</div>
 <div id="waypoint-wrapper">
@@ -136,6 +136,8 @@ body {
 <script src="/map_app/app.js"></script>
 <script>
 
+	var overlay = document.getElementById('overlay');
+
 	var lat = document.getElementById('lat');
 	var lon = document.getElementById('lon');
 	var hdg = document.getElementById('hdg');
@@ -146,6 +148,10 @@ body {
 	var smt = document.getElementById('server-message-timestamp');
 
 	var socket = io.connect(window.location.href);
+
+	if(window.location.pathname == '/map') {
+		overlay.style.display = 'none';
+	}
 
 	socket.on('mavlink', function(data) {
 

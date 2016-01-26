@@ -21,7 +21,7 @@ var server = {
 
 	routes: {
 		'/': '/views/index.html',
-		'/map': '/views/map.html'
+		'/map': '/views/index.html'
 	},
 
 	callbacks: {},
