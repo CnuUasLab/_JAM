@@ -3,16 +3,17 @@
  * dependency for the application. Obsticle updates, and creations are
  * specified in methods, and functions.
  *
- * @author davidkroell
- *
+ *    **************************** CNU Imprint ******************************
  */
 
-map = new OpenLayers.Map("mapdiv");
-map.addLayer(new OpenLayers.Layer.OSM());
+    //Create the Map from the Open Layers Dependency from OSM.
+    map = new OpenLayers.Map("mapdiv");
+    map.addLayer(new OpenLayers.Layer.OSM());
 
+    //Zoom into the map that we use for viewing.
     var zoom = 16;
 
-    //The vector layer
+    //Create global vector layers for the obstacles and the plane.
     var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
         isBaseLayer: true,
         renderers: ['SVG', 'Canvas', 'VML']
@@ -26,7 +27,7 @@ map.addLayer(new OpenLayers.Layer.OSM());
 
 
 
-    //Make the feature a plain OpenLayers marker
+    //Make the plane marker for the Open Layers Marker layer.
     var feature = new OpenLayers.Feature.Vector(
 	new OpenLayers.Geometry.Point(-76.427991, 38.144616).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI SUAS Competition'} ,
@@ -43,13 +44,13 @@ map.addLayer(new OpenLayers.Layer.OSM());
 
 
 
-// Where to position the map.
-var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
+    // Where to position the map (Initially)
+    var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
             .transform(                                                             
                   new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
                   map.getProjectionObject() // to Spherical Mercator Projection       
              );
-map.setCenter (lonLat, zoom);
+    map.setCenter (lonLat, zoom);
 
 
 
@@ -57,9 +58,18 @@ map.setCenter (lonLat, zoom);
 
 //queue implementation for tracer display. To avoid overload.
 var queue_plane = [];
+
+//Checker to see if the plane has moved or not.
 var hasMoved = false;
 
-//US Naval Electronic systems center  LonLat: (-76.427991, 38.144616)
+/**
+  * Change the location of the plane marker leaving tracer.
+  * 
+  * @params lon - Longitude of new waypoint
+  * @params lat - Latitude of the new waypoint.
+  * 
+  * @return - updated plane marker.
+  */
 function changePlaneLoc(lon, lat) {
 
     if (queue_plane.length >= 100) {
@@ -99,7 +109,16 @@ function changePlaneLoc(lon, lat) {
 
 
 
-// function to automatically update the lay maps when a marker changes position.
+/**
+  * Update the plane layer so that the plane 
+  * is update with the marker of previous location.
+  * 
+  * @params mapLayer - Open Street Map layer
+  * @params featureLayer - Layer that contains Plane.
+  * @features features - the tracer marker that's used.
+  * 
+  * @return - updated plane layer.
+  */
 function UpdateLayer(mapLayer, featureLayer, features) {
 
     //setting loaded to false unloads the layer//
@@ -138,7 +157,15 @@ function UpdateLayer(mapLayer, featureLayer, features) {
     }
 }
 
-// This creates an Object which will appear on the map.
+/**
+  * Put a stationary obstacle marker on the map.
+  * 
+  * @params lon - Longitude of the obstacle.
+  * @params lat - Latitude of the obstacle marker.
+  * @params height - height of the cylinder
+  * @params rad - radius of the cylinder
+  * @return - Make obstacle marker appear on the the screen. 
+  */
 function createStationaryObsticle(lon, lat, height, rad) {
 
     obst = new OpenLayers.Feature.Vector(
@@ -152,13 +179,21 @@ function createStationaryObsticle(lon, lat, height, rad) {
 
 
 
-//Creating an array of moving obsticles
+// Creating an array of moving obsticles
 var objectObstMov = {
     Obsticles:[]
 };
 
 
-// Creates a Moving obsticle on the map
+/**
+  * Create a moving obstacle marker on the map.
+  * 
+  * @params lon - Longitude of the obstacle.
+  * @params lat - Latitude of the obstacle marker.
+  * @params id - identifufcation for input into array of moving obstacles.
+  * @params size - radius of the sphere.
+  * @return - Make obstacle marker appear on the the screen.
+  */
 function createMovingObsticle(lon, lat, id, size) {
     
     obst_mov = new OpenLayers.Feature.Vector(
@@ -178,49 +213,16 @@ function createMovingObsticle(lon, lat, id, size) {
     Obst_Layer.addFeatures(obst_mov);
 }
 
-/* -> is Obsolete
-function changeMovingObsticleLoc(lon, lat, id) {
-
-    var curr;
-    var isContained = false;
-    for (var i = 0; i < objectObstMov.Obsticles.length; i++) {
-	if (objectObstMov.Obsticles[i].identification == id) {
-	isContained = true;
-	
-        objectObstMov.Obsticles[i].Obsticle.style.externalGraphic = 'map_app/img/track_pixel_obst.png';
-        objectObstMov.Obsticles[i].Obsticle.style.graphicHeight = 10;
-        objectObstMov.Obsticles[i].Obsticle.style.graphicWidth = 10;
-        objectObstMov.Obsticles[i].Obsticle.style.graphicXOffset = -4;
-        objectObstMov.Obsticles[i].Obsticle.style.graphicYOffest = -10;
-        
-        objectObstMov.Obsticles[i].obsticleLocation.push(objectObstMov.Obsticles[i].Obsticle);
-        Obst_Layer.addFeatures(objectObstMov.Obsticles[i].Obsticle);
-
-	    curr = new OpenLayers.Feature.Vector(
-		    new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
- 		    {description: id} ,
-		    {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25 }
-		    );
-
-        objectObstMov.Obsticles[i].Obsticle = curr;
-	    Obst_Layer.addFeatures(curr);
-	    UpdateLayer(null, Obst_Layer);
-    }
-    if (isContained) {
-    	while (objectObstMov.Obsticles[i].obsticleLocation.length >= 45) {
-        	Obst_Layer.removeFeatures(objectObstMov.Obsticles[i].obsticleLocation[0]);
-        	objectObstMov.Obsticles[i].obsticleLocation.shift();
-    	}
-    } else {
-    	createMovingObsticle(lon, lat, id);
-    }
-  }
-}
-*/
-
-// But, will obstacles rendomly appear while in-flight? If so: redesign..
+// Has the stationary obstacle array been called yet?
 hasBeenCalled = false; 
-//display and wipe the moving obstacles
+
+
+/**
+  * Interop calls this to update obstacle positions
+  * 
+  * @params Obstaclearr - data sent from the obstacle server contains both moving and stationary obst.
+  * @return - Update the obstacle positions based on data.
+  */
 function arrMovObst(Obstaclearr) {
     if (!hasBeenCalled) {
         for (var i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
@@ -238,6 +240,9 @@ function arrMovObst(Obstaclearr) {
 
 }
 
+/**
+  * wipe the obstacle layer so that we can put obstacles at new positions.
+  */
 function wipeObstacles() {
     Obst_Layer.removeAllFeatures();
 }
