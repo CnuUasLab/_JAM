@@ -65,8 +65,8 @@ var hasMoved = false;
 /**
   * Change the location of the plane marker leaving tracer.
   * 
-  * @params lon - Longitude of new waypoint
-  * @params lat - Latitude of the new waypoint.
+  * @param lon - Longitude of new waypoint
+  * @param lat - Latitude of the new waypoint.
   * 
   * @return - updated plane marker.
   */
@@ -113,9 +113,9 @@ function changePlaneLoc(lon, lat) {
   * Update the plane layer so that the plane 
   * is update with the marker of previous location.
   * 
-  * @params mapLayer - Open Street Map layer
-  * @params featureLayer - Layer that contains Plane.
-  * @features features - the tracer marker that's used.
+  * @param mapLayer - Open Street Map layer
+  * @param featureLayer - Layer that contains Plane.
+  * @param features - the tracer marker that's used.
   * 
   * @return - updated plane layer.
   */
@@ -160,10 +160,10 @@ function UpdateLayer(mapLayer, featureLayer, features) {
 /**
   * Put a stationary obstacle marker on the map.
   * 
-  * @params lon - Longitude of the obstacle.
-  * @params lat - Latitude of the obstacle marker.
-  * @params height - height of the cylinder
-  * @params rad - radius of the cylinder
+  * @param lon - Longitude of the obstacle.
+  * @param lat - Latitude of the obstacle marker.
+  * @param height - height of the cylinder
+  * @param rad - radius of the cylinder
   * @return - Make obstacle marker appear on the the screen. 
   */
 function createStationaryObsticle(lon, lat, height, rad) {
@@ -188,10 +188,10 @@ var objectObstMov = {
 /**
   * Create a moving obstacle marker on the map.
   * 
-  * @params lon - Longitude of the obstacle.
-  * @params lat - Latitude of the obstacle marker.
-  * @params id - identifufcation for input into array of moving obstacles.
-  * @params size - radius of the sphere.
+  * @param lon - Longitude of the obstacle.
+  * @param lat - Latitude of the obstacle marker.
+  * @param id - identifufcation for input into array of moving obstacles.
+  * @param size - radius of the sphere.
   * @return - Make obstacle marker appear on the the screen.
   */
 function createMovingObsticle(lon, lat, id, size) {
@@ -220,7 +220,7 @@ hasBeenCalled = false;
 /**
   * Interop calls this to update obstacle positions
   * 
-  * @params Obstaclearr - data sent from the obstacle server contains both moving and stationary obst.
+  * @param Obstaclearr - data sent from the obstacle server contains both moving and stationary obst.
   * @return - Update the obstacle positions based on data.
   */
 function arrMovObst(Obstaclearr) {
@@ -242,6 +242,7 @@ function arrMovObst(Obstaclearr) {
 
 /**
   * wipe the obstacle layer so that we can put obstacles at new positions.
+  * @return - wipe everything off the layer
   */
 function wipeObstacles() {
     Obst_Layer.removeAllFeatures();
