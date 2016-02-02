@@ -64,10 +64,11 @@ var hasMoved = false;
 
 /**
   * Change the location of the plane marker leaving tracer.
+  * Is called from interoperability.
   * 
+  * @see _JAM/views/index.html
   * @param lon - Longitude of new waypoint
   * @param lat - Latitude of the new waypoint.
-  * 
   * @return - updated plane marker.
   */
 function changePlaneLoc(lon, lat) {
