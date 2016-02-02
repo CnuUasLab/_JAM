@@ -10,6 +10,9 @@
     map = new OpenLayers.Map("mapdiv");
     map.addLayer(new OpenLayers.Layer.OSM());
 
+    // Has the stationary obstacle array been called yet?
+    hasBeenCalled = false; 
+
     //Zoom into the map that we use for viewing.
     var zoom = 16;
 
@@ -25,7 +28,10 @@
         renderers: ['SVG', 'Canvas', 'VML']
     });
 
-
+    // Creating an array of moving obsticles
+    var objectObstMov = {
+        Obsticles:[]
+    };
 
     //Make the plane marker for the Open Layers Marker layer.
     var feature = new OpenLayers.Feature.Vector(
@@ -35,14 +41,11 @@
           graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25 }
     );
 
-
     //Add the Plane's Icon automatically to the center of the runway.
-            // vectorLayer.addFeatures(feature);
-            map.addLayer(vectorLayer);
-            map.addLayer(Obst_Layer);
-            map.addLayer(planeLayer);
-
-
+    // vectorLayer.addFeatures(feature);
+    map.addLayer(vectorLayer);
+    map.addLayer(Obst_Layer);
+    map.addLayer(planeLayer);
 
     // Where to position the map (Initially)
     var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
@@ -52,15 +55,12 @@
              );
     map.setCenter (lonLat, zoom);
 
+    //queue implementation for tracer display. To avoid overload.
+    var queue_plane = [];
 
+    //Checker to see if the plane has moved or not.
+    var hasMoved = false;
 
-
-
-//queue implementation for tracer display. To avoid overload.
-var queue_plane = [];
-
-//Checker to see if the plane has moved or not.
-var hasMoved = false;
 
 /**
   * Change the location of the plane marker leaving tracer.
@@ -106,9 +106,6 @@ function changePlaneLoc(lon, lat) {
         map.panTo(lonLat);
     }
 }
-
-
-
 
 /**
   * Update the plane layer so that the plane 
@@ -178,14 +175,6 @@ function createStationaryObsticle(lon, lat, height, rad) {
     planeLayer.addFeatures(obst);
 }
 
-
-
-// Creating an array of moving obsticles
-var objectObstMov = {
-    Obsticles:[]
-};
-
-
 /**
   * Create a moving obstacle marker on the map.
   * 
@@ -213,10 +202,6 @@ function createMovingObsticle(lon, lat, id, size) {
     objectObstMov.Obsticles.push(obst_object);
     Obst_Layer.addFeatures(obst_mov);
 }
-
-// Has the stationary obstacle array been called yet?
-hasBeenCalled = false; 
-
 
 /**
   * Interop calls this to update obstacle positions
