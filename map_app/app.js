@@ -220,6 +220,7 @@ hasBeenCalled = false;
 /**
   * Interop calls this to update obstacle positions
   * 
+  * @see _JAM/views/index.html
   * @param Obstaclearr - data sent from the obstacle server contains both moving and stationary obst.
   * @return - Update the obstacle positions based on data.
   */
@@ -242,7 +243,6 @@ function arrMovObst(Obstaclearr) {
 
 /**
   * wipe the obstacle layer so that we can put obstacles at new positions.
-  * @see _JAM/views/index.html
   * @return - wipe everything off the layer
   */
 function wipeObstacles() {
