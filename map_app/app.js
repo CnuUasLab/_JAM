@@ -45,7 +45,8 @@
 
     //Make the plane marker for the Open Layers Marker layer.
     var feature = new OpenLayers.Feature.Vector(
-	new OpenLayers.Geometry.Point(-76.427991, 38.144616).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+	new OpenLayers.Geometry.Point(-76.427991, 38.144616).transform(new OpenLayers.Projection("EPSG:4326"),
+										map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI SUAS Competition'} ,
         { externalGraphic: 'map_app/img/star_plane.png', 
           graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25 }
@@ -217,7 +218,8 @@ function createMovingObsticle(lon, lat, id, size) {
 function arrMovObst(Obstaclearr) {
     if (!hasBeenCalled) {
         for (var i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
-            createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude, Obstaclearr.stationary_obstacles[i].cylinder_height, Obstaclearr.stationary_obstacles[i].cylinder_radius);
+            createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude,
+            Obstaclearr.stationary_obstacles[i].cylinder_height, Obstaclearr.stationary_obstacles[i].cylinder_radius);
         }
 
         hasBeenCalled = true;
@@ -226,7 +228,8 @@ function arrMovObst(Obstaclearr) {
     wipeObstacles();
 
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
-        createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i, Obstaclearr.moving_obstacles[i].sphere_radius);
+        createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i,
+        			Obstaclearr.moving_obstacles[i].sphere_radius);
     }
 
 }
