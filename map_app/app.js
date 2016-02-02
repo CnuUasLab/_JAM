@@ -242,6 +242,7 @@ function arrMovObst(Obstaclearr) {
 
 /**
   * wipe the obstacle layer so that we can put obstacles at new positions.
+  * @see _JAM/views/index.html
   * @return - wipe everything off the layer
   */
 function wipeObstacles() {
