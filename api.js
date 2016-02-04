@@ -19,6 +19,43 @@ var api = {
 		var nextWaypoint = waypoints.get_next_waypoint()
 		var followingWaypoint = waypoints.get_following_waypoint();
 
+		if(!prevWaypoint || !nextWaypoint || !followingWaypoint) {
+			return {
+				"grid_width": 100,
+				"grid_height": 400,
+				"is_changed": false,
+				"obstacles": {
+					"moving_obstacles": [
+						{
+							"x": 50,
+							"y": 200,
+							"radius": 10,
+							"heading": 0,
+							"velocity": 5,
+							"is_changed": false
+						}
+					],
+					"stationary_obstacles": [
+						{
+							"x": 30,
+							"y": 20,
+							"radius": 15
+						}
+					]
+				},
+				"goal": {
+					"x": 50,
+					"y": 350,
+					"theta": 15
+				},
+				"location": {
+					"x": 50,
+					"y": 5,
+					"theta": 350
+				}
+			};
+		}
+
 		grid.set_width(config.get_config('grid').grid_with);
 
 		// calculate distance from last waypoint to next
