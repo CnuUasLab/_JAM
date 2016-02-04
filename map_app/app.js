@@ -28,21 +28,6 @@
         renderers: ['SVG', 'Canvas', 'VML']
     });
 
-    // Creating an array of moving obsticles
-    var objectObstMov = {
-        Obsticles:[]
-    };
-
-    //Creating JSON object to push to the Array
-    var obst_object = {
-        "Obsticle": obst_mov,
-        "identification" : id,
-         "obsticleLocation":[]
-    };
-
-    objectObstMov.Obsticles.push(obst_object);
-    Obst_Layer.addFeatures(obst_mov);
-
     //Make the plane marker for the Open Layers Marker layer.
     var feature = new OpenLayers.Feature.Vector(
 	new OpenLayers.Geometry.Point(-76.427991, 38.144616).transform(new OpenLayers.Projection("EPSG:4326"),
@@ -206,6 +191,7 @@ function createMovingObsticle(lon, lat, id, size) {
 	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4),
 	     	      									graphicXOffset:-12, graphicYOffset:-25}
 					    );
+	Obst_Layer.addFeatures(obst_mov);
 }
 
 /**
