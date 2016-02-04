@@ -13,6 +13,9 @@
     // Has the stationary obstacle array been called yet?
     hasBeenCalled = false; 
 
+    //Count for clearing the Obstacle layer
+    count = 0;
+
     //Zoom into the map that we use for viewing.
     var zoom = 16;
 
@@ -27,21 +30,6 @@
     var planeLayer = new OpenLayers.Layer.Vector("Plane", {
         renderers: ['SVG', 'Canvas', 'VML']
     });
-
-    // Creating an array of moving obsticles
-    var objectObstMov = {
-        Obsticles:[]
-    };
-
-    //Creating JSON object to push to the Array
-    var obst_object = {
-        "Obsticle": obst_mov,
-        "identification" : id,
-         "obsticleLocation":[]
-    };
-
-    objectObstMov.Obsticles.push(obst_object);
-    Obst_Layer.addFeatures(obst_mov);
 
     //Make the plane marker for the Open Layers Marker layer.
     var feature = new OpenLayers.Feature.Vector(
@@ -197,15 +185,15 @@ function createStationaryObsticle(lon, lat, height, rad) {
   * @param size - radius of the sphere.
   * @return - Make obstacle marker appear on the the screen.
   */
-function createMovingObsticle(lon, lat, id, size) {
+function createMovingObsticle(lon, lat, size) {
     
     obst_mov = new OpenLayers.Feature.Vector(
-		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"),
-		      							      map.getProjectionObject()),
-		      {description: id},
-	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4),
-	     	      									graphicXOffset:-12, graphicYOffset:-25}
-					    );
+		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+              {description: 'Is an Obstacle'},
+	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4), graphicXOffset:-12, graphicYOffset:-25}
+					                                   );
+
+    Obst_Layer.addFeatures(obst_mov);
 }
 
 /**
@@ -225,13 +213,16 @@ function arrMovObst(Obstaclearr) {
         hasBeenCalled = true;
     }
     
-    wipeObstacles();
-
-    for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
-        createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i,
-        			Obstaclearr.moving_obstacles[i].sphere_radius);
+    if (count % 4 == 0) {
+      wipeObstacles();
     }
 
+    for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
+
+        createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, Obstaclearr.moving_obstacles[i].sphere_radius);
+    }
+
+    count = count + 1;
 }
 
 /**
