@@ -213,7 +213,7 @@ function arrMovObst(Obstaclearr) {
         hasBeenCalled = true;
     }
     
-    if (count % 4 == 0) {
+    if (count % 2 == 0) {
       wipeObstacles();
     }
 
