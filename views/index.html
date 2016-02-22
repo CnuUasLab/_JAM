@@ -121,7 +121,7 @@ body {
 <body>
 
 <div id="mapdiv"></div>
-<div class="overlay" id="overlay"></div>                                                     
+<div class="overlay" id="overlay"></div>
 
 <div id="telemetry-receive-frequency"><span id="freq">0</span>Hz</div>
 <div id="waypoint-wrapper">
@@ -141,8 +141,15 @@ body {
 		<div id="server-message-timestamp">Loading, please wait...</div><!-- #server-message-timestamp -->
 	</div><!-- #server-wrapper -->
 </div><!-- #wrapper -->
-<script src="http://www.openlayers.org/api/OpenLayers.js"></script>             
+
+<!-- #Website Source -->
+<!-- #<script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
+<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+<!--#Cached Source-->
+<!--#<script src="../ol2/lib/OpenLayers.js"></script>-->
+             
 <script src="/map_app/app.js"></script>
+
 <script>
 
 	var overlay = document.getElementById('overlay');
