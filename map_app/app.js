@@ -57,9 +57,13 @@
     //queue implementation for tracer display. To avoid overload.
     var queue_plane = [];
 
-    //Checker to see if the plane has moved or not.
+    //Have the stationary obsticles been called?
+    var StationaryObstBeenCalled = false;
+    
+    //Holds moving obstacles in array in JSON format.
+    var movingObstacles = [];
+    //Has the plane obsticle moved?
     var hasMoved = false;
-
 
 /**
   * Change the location of the plane marker leaving tracer.
@@ -185,15 +189,62 @@ function createStationaryObsticle(lon, lat, height, rad) {
   * @param size - radius of the sphere.
   * @return - Make obstacle marker appear on the the screen.
   */
-function createMovingObsticle(lon, lat, size) {
+function createMovingObsticle(lon, lat, size, id) {
     
     obst_mov = new OpenLayers.Feature.Vector(
 		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
               {description: 'Is an Obstacle'},
 	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4), graphicXOffset:-12, graphicYOffset:-25}
 					                                   );
+    // JSON object we use to store obsticle information.
+    var ObjectToInsert = {
+	"Obsticle": obst_mov,
+        "identification" : id,
+	"obsticleLocation":[],
+	"size":size
+    }
 
-    Obst_Layer.addFeatures(obst_mov);
+    movingObstacles.push(ObjectToInsert);
+}
+
+/**
+ * Change a moving obstacle that has already been put on the field.
+ * 
+ * @param lon - Longitude to change the obsticle to
+ * @param lat - Latitude to change to obsticle to.
+ * @param id - identification of the obsticle to distignuish from others.
+ * @param size - radius of the sphere in case the obsticle hasn't been created.
+ * @return the obsticle changed to its new position
+ */
+function changeMovingObsticleLoc(lon, lat, size, id) {
+    var curr;
+    var containsObstacle = false;
+    for (var i = 0; i < movingObstacles.length; i++) {
+	if (movingObstacles[i].identification == id) {
+	    containsObstacle = true;
+	    movingObstacles[i].obsticleLocation.push(movingObstacles.Obsticle);
+
+	    curr = new OpenLayers.Feature.Vector(
+						 new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+						 {description: id} ,
+						 {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4), graphicXOffset:-12, graphicYOffset:-25 }
+						 );
+
+	    movingObstacles.Obsticle = curr;
+	    Obst_Layer.addFeatures(curr);
+	    UpdateLayer(Obst_Layer);
+	}
+	while (movingObstacles[i].obsticleLocation.length >= 11) {
+	    Obst_Layer.removeFeatures(movingObstacles[i].obsticleLocation[0]);
+	    movingObstacles[i].obsticleLocation.shift();
+	}
+    }
+    
+    // If the obstacle hasn't been created previously, then create it.
+    if (!containsObstacle) {
+	createMovingObsticle(lon, lat, size, id);
+    }
+
 }
 
 /**
@@ -204,31 +255,17 @@ function createMovingObsticle(lon, lat, size) {
   * @return - Update the obstacle positions based on data.
   */
 function arrMovObst(Obstaclearr) {
-    if (!hasBeenCalled) {
+    if (!StationaryObstBeenCalled) {
         for (var i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
             createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude,
             Obstaclearr.stationary_obstacles[i].cylinder_height, Obstaclearr.stationary_obstacles[i].cylinder_radius);
         }
 
-        hasBeenCalled = true;
-    }
-    
-    if (count % 10 == 0) {
-      wipeObstacles();
+        StationaryObstBeenCalled = true;
     }
 
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
 
-        createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, Obstaclearr.moving_obstacles[i].sphere_radius);
+        changeMovingObsticleLoc(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, Obstaclearr.moving_obstacles[i].sphere_radius, i);
     }
-
-    count = count + 1;
-}
-
-/**
-  * wipe the obstacle layer so that we can put obstacles at new positions.
-  * @return - wipe everything off the layer
-  */
-function wipeObstacles() {
-    Obst_Layer.removeAllFeatures();
 }
