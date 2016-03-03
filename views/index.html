@@ -43,13 +43,13 @@ body {
         background: black;
 	/*font-family: 'EB Garamond';*/
 	font-size: 3em;
-	min-height: 20%px;
+	min-height: 10%;
 	margin: 8% auto 0 auto;
         position: fixed;
         right: 28%;
         bottom: 0%;
 	text-align: center;
-	width: 20%px;
+	min-width: 20%;
 
         border: 3px #e4e4e4 solid;
         border-color: white;
@@ -86,12 +86,17 @@ body {
 
 		#waypoint-wrapper {
 			top: 2;
-			<!-- bottom: 0.2; --> 
+                        background-color: black;
+                        border-style: solid;
+                        border-color:#484848 #303030;
+                        min-width = 30%;
+                        margin-top: 100%
+			bottom: 0.2 
 			display: block;
 			font-size: 2em;
 			left: 0;
 			position: absolute;
-			width: 100%;
+			width: ;
 		}
 
 			#waypoint-wrapper ul {
@@ -107,8 +112,8 @@ body {
 				}
 
 				#waypoint-wrapper ul.right {
-					float: left; <!-- right -->
-					text-align: left; <!-- right -->
+					float: right
+					text-align: right
 				}
 
 				#waypoint-wrapper ul li span.bright {
@@ -120,7 +125,19 @@ body {
 </head>
 <body>
 
-<div id="mapdiv"></div>
+
+<div id="mapdiv"></div> 
+
+<!-- #Website Source The tiels will display behind using this.-->
+<!-- #<script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
+<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+<!--#Cached Source The tiles will display above with this.-->
+<!--#<script src="../ol2/lib/OpenLayers.js"></script>-->
+
+<script src="/map_app/app.js"></script>
+
+
+
 <div class="overlay" id="overlay"></div>
 
 <div id="telemetry-receive-frequency"><span id="freq">0</span>Hz</div>
@@ -142,13 +159,6 @@ body {
 	</div><!-- #server-wrapper -->
 </div><!-- #wrapper -->
 
-<!-- #Website Source -->
-<!-- #<script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
-<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
-<!--#Cached Source-->
-<!--#<script src="../ol2/lib/OpenLayers.js"></script>-->
-             
-<script src="/map_app/app.js"></script>
 
 <script>
 
