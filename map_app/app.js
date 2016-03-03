@@ -6,6 +6,7 @@
  *    **************************** CNU Imprint ******************************
  */
 
+
     //Create the Map from the Open Layers Dependency from OSM.
     map = new OpenLayers.Map("mapdiv");
     map.addLayer(new OpenLayers.Layer.OSM());
@@ -76,7 +77,7 @@
   */
 function changePlaneLoc(lon, lat) {
 
-    if (queue_plane.length >= 100) {
+    if (queue_plane.length >= 18) {
         planeLayer.removeFeatures(queue_plane[0]);
         queue_plane.shift();
     }
