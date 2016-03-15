@@ -18,7 +18,7 @@
     count = 0;
 
     //Zoom into the map that we use for viewing.
-    var zoom = 16;
+    var zoom = 17;
 
     //Create global vector layers for the obstacles and the plane.
     var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
@@ -75,7 +75,7 @@
   * @param lat - Latitude of the new waypoint.
   * @return - updated plane marker.
   */
-function changePlaneLoc(lon, lat) {
+function changePlaneLoc(lon, lat, hdg) {
 
     if (queue_plane.length >= 18) {
         planeLayer.removeFeatures(queue_plane[0]);
@@ -83,10 +83,10 @@ function changePlaneLoc(lon, lat) {
     }
 
     feature.style.externalGraphic = 'map_app/img/track_pixel.png';
-    feature.style.graphicHeight = 10;
-    feature.style.graphicWidth = 10;
-    feature.style.graphicXOffset = -4;
-    feature.style.graphicYOffset = -13;
+    feature.style.graphicHeight = 7;
+    feature.style.graphicWidth = 7;
+    feature.style.graphicXOffset = 0;
+    feature.style.graphicYOffset = 0;
 
     queue_plane.push(feature);
 
@@ -95,8 +95,10 @@ function changePlaneLoc(lon, lat) {
     feature = new OpenLayers.Feature.Vector(
         new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI Competition'} ,
-        {externalGraphic:'map_app/img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25 }
+        {externalGraphic:'map_app/img/airplane.png', graphicHeight: 35, graphicWidth: 35, graphicXOffset:-12, graphicYOffset:-25, rotation: hdg }
     );
+ 
+    
 
     UpdateLayer(null, planeLayer, [feature, trackFeature]);
 
