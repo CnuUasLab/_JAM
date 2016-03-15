@@ -13,7 +13,7 @@ body {
 }
 
 .overlay {
-	background: rgba(0,0,0,0.33);
+	background: rgba(0,0,0,0.0);
 	display: block;
 	height: 100%;
 	left: 0;
@@ -185,7 +185,7 @@ body {
 	socket.on('mavlink', function(data) {
 
 		// move plane
-		changePlaneLoc(data.longitude, data.latitude);
+		changePlaneLoc(data.longitude, data.latitude, data.uas_heading);
 		
 		// calculate latitude minutes and seconds
 		var lat_minutes = parseInt(('' + data.latitude).split('.')[1]);
