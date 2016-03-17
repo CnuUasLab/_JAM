@@ -69,6 +69,11 @@ function init_listeners() {
 			if(path.match(/\/api\/path/gi)) {
 				return server.receive_api_path_request(request, response);
 			}
+			
+			// relay /api/target requests to interop
+			if(path.match(/\/api\/targets(\/)?.*/gi)) {
+				return server.receive_api_target_request(request, response, auvsi);
+			}
 
 			return server.receive_api_request(request, response, server.REQUEST_API_IS_INVALID);
 		}

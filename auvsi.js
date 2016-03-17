@@ -21,6 +21,7 @@ var auvsi = {
 		api_path_login: '/api/login',
 		api_path_obstacles: '/api/obstacles',
 		api_path_telemetry: '/api/telemetry',
+		api_path_targets: '/api/targets'
 
 	},
 
@@ -314,6 +315,73 @@ var auvsi = {
 		response.on('end', function() {
 			callback.call(this, data);
 		});
+
+	},
+
+	/**
+	 * Generic post request to auvsi server
+	 */
+	post: function(path, data, callback) {
+
+		callback = callback || function() {};
+
+		var request = http.request({
+			method: 'POST',
+			path: path,
+			host: config.get_config('auvsi').host,
+			port: config.get_config('auvsi').port,
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Content-Length': data.length,
+				'Cookie': auvsi.get_cookie()
+			}
+		});
+
+		request.on('response', function(response) {
+			auvsi.get_response(response, function(res_data) {
+				callback.call(auvsi, null, res_data);
+			});
+		});
+		request.on('error', function(error) {
+			utils.log('ERR auvsi>function>telemetry> ' + error.toString());
+			callback.call(auvsi, error);
+		});
+		request.end(data);
+
+	},
+
+	/**
+	 * Generic get request to auvsi server
+	 */
+	get: function(path, callback) {
+
+		callback = callback || function() {};
+
+		var request = http.request({
+
+			method: 'GET',
+			path: path,
+			host: config.get_config('auvsi').host,
+			port: config.get_config('auvsi').port,
+			headers: {
+				'Cookie': auvsi.get_cookie()
+			}
+
+		});
+
+		request.on('response', function(response) {
+
+			auvsi.get_response(response, function(res_data) {
+				callback.call(auvsi, null, res_data);
+			});
+
+		});
+		request.on('error', function(err) {
+			utils.log('ERR auvsi>function>obstacles> ' + error.toString());
+			callback.call(auvsi, err);
+		});
+
+		request.end();
 
 	},
 
