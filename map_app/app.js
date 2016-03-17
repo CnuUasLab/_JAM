@@ -6,6 +6,7 @@
  *    **************************** CNU Imprint ******************************
  */
 
+
     //Create the Map from the Open Layers Dependency from OSM.
     map = new OpenLayers.Map("mapdiv");
     map.addLayer(new OpenLayers.Layer.OSM());
@@ -13,8 +14,11 @@
     // Has the stationary obstacle array been called yet?
     hasBeenCalled = false; 
 
+    //Count for clearing the Obstacle layer
+    count = 0;
+
     //Zoom into the map that we use for viewing.
-    var zoom = 16;
+    var zoom = 17;
 
     //Create global vector layers for the obstacles and the plane.
     var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
@@ -27,21 +31,6 @@
     var planeLayer = new OpenLayers.Layer.Vector("Plane", {
         renderers: ['SVG', 'Canvas', 'VML']
     });
-
-    // Creating an array of moving obsticles
-    var objectObstMov = {
-        Obsticles:[]
-    };
-
-    //Creating JSON object to push to the Array
-    var obst_object = {
-        "Obsticle": obst_mov,
-        "identification" : id,
-         "obsticleLocation":[]
-    };
-
-    objectObstMov.Obsticles.push(obst_object);
-    Obst_Layer.addFeatures(obst_mov);
 
     //Make the plane marker for the Open Layers Marker layer.
     var feature = new OpenLayers.Feature.Vector(
@@ -69,9 +58,13 @@
     //queue implementation for tracer display. To avoid overload.
     var queue_plane = [];
 
-    //Checker to see if the plane has moved or not.
+    //Have the stationary obsticles been called?
+    var StationaryObstBeenCalled = false;
+    
+    //Holds moving obstacles in array in JSON format.
+    var movingObstacles = [];
+    //Has the plane obsticle moved?
     var hasMoved = false;
-
 
 /**
   * Change the location of the plane marker leaving tracer.
@@ -82,18 +75,18 @@
   * @param lat - Latitude of the new waypoint.
   * @return - updated plane marker.
   */
-function changePlaneLoc(lon, lat) {
+function changePlaneLoc(lon, lat, hdg) {
 
-    if (queue_plane.length >= 100) {
+    if (queue_plane.length >= 18) {
         planeLayer.removeFeatures(queue_plane[0]);
         queue_plane.shift();
     }
 
     feature.style.externalGraphic = 'map_app/img/track_pixel.png';
-    feature.style.graphicHeight = 10;
-    feature.style.graphicWidth = 10;
-    feature.style.graphicXOffset = -4;
-    feature.style.graphicYOffset = -13;
+    feature.style.graphicHeight = 7;
+    feature.style.graphicWidth = 7;
+    feature.style.graphicXOffset = 0;
+    feature.style.graphicYOffset = 0;
 
     queue_plane.push(feature);
 
@@ -102,8 +95,10 @@ function changePlaneLoc(lon, lat) {
     feature = new OpenLayers.Feature.Vector(
         new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI Competition'} ,
-        {externalGraphic:'map_app/img/star_plane.png', graphicHeight: 30, graphicWidth: 29, graphicXOffset:-12, graphicYOffset:-25 }
+        {externalGraphic:'map_app/img/airplane.png', graphicHeight: 35, graphicWidth: 35, graphicXOffset:-12, graphicYOffset:-25, rotation: hdg }
     );
+ 
+    
 
     UpdateLayer(null, planeLayer, [feature, trackFeature]);
 
@@ -197,15 +192,62 @@ function createStationaryObsticle(lon, lat, height, rad) {
   * @param size - radius of the sphere.
   * @return - Make obstacle marker appear on the the screen.
   */
-function createMovingObsticle(lon, lat, id, size) {
+function createMovingObsticle(lon, lat, size, id) {
     
     obst_mov = new OpenLayers.Feature.Vector(
-		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"),
-		      							      map.getProjectionObject()),
-		      {description: id},
-	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4),
-	     	      									graphicXOffset:-12, graphicYOffset:-25}
-					    );
+		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+              {description: 'Is an Obstacle'},
+	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4), graphicXOffset:-12, graphicYOffset:-25}
+					                                   );
+    // JSON object we use to store obsticle information.
+    var ObjectToInsert = {
+	"Obsticle": obst_mov,
+        "identification" : id,
+	"obsticleLocation":[],
+	"size":size
+    }
+
+    movingObstacles.push(ObjectToInsert);
+}
+
+/**
+ * Change a moving obstacle that has already been put on the field.
+ * 
+ * @param lon - Longitude to change the obsticle to
+ * @param lat - Latitude to change to obsticle to.
+ * @param id - identification of the obsticle to distignuish from others.
+ * @param size - radius of the sphere in case the obsticle hasn't been created.
+ * @return the obsticle changed to its new position
+ */
+function changeMovingObsticleLoc(lon, lat, size, id) {
+    var curr;
+    var containsObstacle = false;
+    for (var i = 0; i < movingObstacles.length; i++) {
+	if (movingObstacles[i].identification == id) {
+	    containsObstacle = true;
+	    movingObstacles[i].obsticleLocation.push(movingObstacles.Obsticle);
+
+	    curr = new OpenLayers.Feature.Vector(
+						 new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
+						 {description: id} ,
+						 {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4), graphicXOffset:-12, graphicYOffset:-25 }
+						 );
+
+	    movingObstacles.Obsticle = curr;
+	    Obst_Layer.addFeatures(curr);
+	    UpdateLayer(Obst_Layer);
+	}
+	while (movingObstacles[i].obsticleLocation.length >= 11) {
+	    Obst_Layer.removeFeatures(movingObstacles[i].obsticleLocation[0]);
+	    movingObstacles[i].obsticleLocation.shift();
+	}
+    }
+    
+    // If the obstacle hasn't been created previously, then create it.
+    if (!containsObstacle) {
+	createMovingObsticle(lon, lat, size, id);
+    }
+
 }
 
 /**
@@ -216,28 +258,17 @@ function createMovingObsticle(lon, lat, id, size) {
   * @return - Update the obstacle positions based on data.
   */
 function arrMovObst(Obstaclearr) {
-    if (!hasBeenCalled) {
+    if (!StationaryObstBeenCalled) {
         for (var i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
             createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude,
             Obstaclearr.stationary_obstacles[i].cylinder_height, Obstaclearr.stationary_obstacles[i].cylinder_radius);
         }
 
-        hasBeenCalled = true;
+        StationaryObstBeenCalled = true;
     }
-    
-    wipeObstacles();
 
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
-        createMovingObsticle(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, i,
-        			Obstaclearr.moving_obstacles[i].sphere_radius);
+
+        changeMovingObsticleLoc(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, Obstaclearr.moving_obstacles[i].sphere_radius, i);
     }
-
-}
-
-/**
-  * wipe the obstacle layer so that we can put obstacles at new positions.
-  * @return - wipe everything off the layer
-  */
-function wipeObstacles() {
-    Obst_Layer.removeAllFeatures();
 }

@@ -13,7 +13,7 @@ body {
 }
 
 .overlay {
-	background: rgba(0,0,0,0.54);
+	background: rgba(0,0,0,0.0);
 	display: block;
 	height: 100%;
 	left: 0;
@@ -33,21 +33,29 @@ body {
 	/*background: red;*/
 	left: 0;
 	height: 100%;
-	position: absolute;
+	position: fixed;
 	top: 0;
 	width: 100%;
 }
 
 #wrapper {
 
-	background: transparent;
+        background: black;
 	/*font-family: 'EB Garamond';*/
-	font-size: 4em;
-	min-height: 100px;
+	font-size: 3em;
+	min-height: 10%;
 	margin: 8% auto 0 auto;
-	position: relative;
+        position: fixed;
+        right: 28%;
+        bottom: 0%;
 	text-align: center;
-	width: 600px;
+	min-width: 20%;
+
+        border: 3px #e4e4e4 solid;
+        border-color: white;
+        padding: 20px;
+        border-radius: 90px;
+        box-shadow: 0 0 24px aqua;
 
 }
 	#server-wrapper {
@@ -65,7 +73,7 @@ body {
 			display: block;
 			font-size: 0.8em;
 			font-weight: 300;
-			text-align: center;
+			text-align: center; <!-- static -->
 
 		}
 
@@ -77,12 +85,18 @@ body {
 		}
 
 		#waypoint-wrapper {
-			bottom: 0;
+			top: 2;
+                        background-color: black;
+                        border-style: solid;
+                        border-color:#484848 #303030;
+                        min-width = 30%;
+                        margin-top: 100%
+			bottom: 0.2 
 			display: block;
 			font-size: 2em;
 			left: 0;
 			position: absolute;
-			width: 100%;
+			width: ;
 		}
 
 			#waypoint-wrapper ul {
@@ -98,8 +112,8 @@ body {
 				}
 
 				#waypoint-wrapper ul.right {
-					float: right;
-					text-align: right;
+					float: right
+					text-align: right
 				}
 
 				#waypoint-wrapper ul li span.bright {
@@ -111,8 +125,23 @@ body {
 </head>
 <body>
 
-<div id="mapdiv"></div>
-<div class="overlay" id="overlay"></div>                                                     
+
+<div id="mapdiv"> 
+
+    <!-- #Website Source The tiels will display behind using this.-->
+    <!-- #<script src="http://www.openlayers.org/api/OpenLayers.js"></script> -->
+    
+    <script src="../ol2/lib/OpenLayers.js"></script>
+    
+    <!--#Cached Source -->
+    <!--#<script src="../ol2/lib/OpenLayers.js"></script>-->
+
+    <script src="/map_app/app.js"></script>
+
+</div>
+
+
+<div class="overlay" id="overlay"></div>
 
 <div id="telemetry-receive-frequency"><span id="freq">0</span>Hz</div>
 <div id="waypoint-wrapper">
@@ -132,8 +161,8 @@ body {
 		<div id="server-message-timestamp">Loading, please wait...</div><!-- #server-message-timestamp -->
 	</div><!-- #server-wrapper -->
 </div><!-- #wrapper -->
-<script src="http://www.openlayers.org/api/OpenLayers.js"></script>             
-<script src="/map_app/app.js"></script>
+
+
 <script>
 
 	var overlay = document.getElementById('overlay');
@@ -156,7 +185,7 @@ body {
 	socket.on('mavlink', function(data) {
 
 		// move plane
-		changePlaneLoc(data.longitude, data.latitude);
+		changePlaneLoc(data.longitude, data.latitude, data.uas_heading);
 		
 		// calculate latitude minutes and seconds
 		var lat_minutes = parseInt(('' + data.latitude).split('.')[1]);
