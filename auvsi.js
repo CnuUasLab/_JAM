@@ -87,16 +87,16 @@ var auvsi = {
 				auvsi.connection.timeout_attempts++;
 
 				if(auvsi.connection.timeout_attempts > auvsi.CONNECTION_MAX_ATTEMPTS) {
-					return utils.log('ERR auvsi>auth> Maximum number of login attempts exceeded. Unable to establish a connection to auvsi server.');
+					return utils.log('ERR AUVSI AUTH Maximum number of login attempts exceeded. Unable to establish a connection to auvsi server.');
 				}
 
-				utils.log('WARN auvsi>function>auth> Unable to connect to auvsi server. Retrying...');
+				utils.log('WARN AUVSI AUTH Unable to connect to auvsi server. Retrying...');
 				
 				clearTimeout(auvsi.connection.timeout);
 				auvsi.connection.timeout = setTimeout(auvsi.auth, auvsi.connection.timeout_auth_reconnect_delay);
 				
 			} else {
-				utils.log('ERR auvsi>function>auth> ' + error.toString());
+				utils.log('ERR AUVSI AUTH ' + error.toString());
 			}
 
 		});
@@ -133,13 +133,13 @@ var auvsi = {
 			auvsi.get_response(response, function(data) {
 
 				if(!data) {
-					return utils.log('API ERR /api/server_info ' + data);
+					return utils.log('ERR AUVSI URL(/api/server_info) ' + data);
 				}
 
 				try {
 					auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_INFO, [JSON.parse(data)]);
 				} catch(e) {
-					utils.log('API ERR /api/server_info -> ' + e);
+					utils.log('ERR AUVSI URL(/api/server_info)  ' + e);
 				}
 
 			});
@@ -147,7 +147,7 @@ var auvsi = {
 		});
 
 		request.on('error', function(error) {
-			utils.log('ERR auvsi_get_info() failure> ' + error.toString());
+			utils.log('ERR AUVSI FUNC(auvsi_get_info) ' + error.toString());
 		});
 
 		request.end();
@@ -191,7 +191,7 @@ var auvsi = {
 		});
 
 		request.on('error', function(error) {
-			utils.log('ERR auvsi>function>obstacles> ' + error.toString());
+			utils.log('ERR AUVSI OBSTACLES ' + error.toString());
 		});
 
 		request.end();
@@ -234,15 +234,15 @@ var auvsi = {
 					if(data == 'UAS Telemetry Successfully Posted.') {
 
 						if(mavlink.get_previous_time_boot() == mavlink.get_time_boot()) {
-							utils.log('No new telemetry received. Posting previously received telemetry...');
+							utils.log('INFO AUVSI TELEMETRY No new telemetry received. Posting previously received telemetry...');
 						} else {
-							utils.log('Successfully posted updated telemetry.');
+							utils.log('INFO AUVSI TELEMETRY Successfully posted updated telemetry.');
 						}
 
 						mavlink.set_previous_time_boot(mavlink.get_time_boot());
 
 					} else {
-						utils.log('ERR auvsi>function>telemetry> ' + data);
+						utils.log('ERR AUVSI TELEMETRY ' + data);
 					}
 
 				});
@@ -250,13 +250,13 @@ var auvsi = {
 			});
 
 			request.on('error', function(error) {
-				utils.log('ERR auvsi>function>telemetry> ' + error.toString());
+				utils.log('ERR AUVSI TELEMETRY ' + error.toString());
 			});
 
 			request.end(query);
 
 		} else {
-			utils.log('WARN auvsi>function>telemetry> Awaiting mavlink telemetry...');
+			utils.log('WARN AUVSI TELEMETRY Awaiting mavlink telemetry...');
 		}
 
 	},
@@ -276,7 +276,7 @@ var auvsi = {
 		auvsi.auth(function(err) {
 
 			if(err) {
-				return utils.log('ERR auvsi>auth> ' + err);
+				return utils.log('ERR AUVSI AUTH ' + err);
 			}
 
 			clearTimeout(auvsi.connection.timeout);
@@ -343,7 +343,7 @@ var auvsi = {
 			});
 		});
 		request.on('error', function(error) {
-			utils.log('ERR auvsi>function>telemetry> ' + error.toString());
+			utils.log('ERR AUVSI TELEMETRY ' + error.toString());
 			callback.call(auvsi, error);
 		});
 		request.end(data);
@@ -377,7 +377,7 @@ var auvsi = {
 
 		});
 		request.on('error', function(err) {
-			utils.log('ERR auvsi>function>obstacles> ' + error.toString());
+			utils.log('ERR AUVSI OBSTACLES ' + error.toString());
 			callback.call(auvsi, err);
 		});
 

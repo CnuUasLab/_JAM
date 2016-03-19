@@ -148,7 +148,7 @@ var libmath = {
 	get_bearing: function(waypoint1, waypoint2) {
 
 		var off_x = waypoint2.x - waypoint1.x;
-		var off_y = (waypoint2.y - waypoint1.y) / longitude_scale(waypoint2);
+		var off_y = (waypoint2.y - waypoint1.y) / libmath.longitude_scale(waypoint2);
 
 		var bearing = 9000 + Math.atan2(-off_y, off_x) * 5729.57795;
 

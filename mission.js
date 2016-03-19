@@ -9,9 +9,10 @@ var mission = {
 
 	waypoints_request_timeout: null,
 	waypoints_received_count: false,
-	waypoints_request_isFinished: true,
+	waypoints_request_isFinished: false,
 	waypoints_count: 0,
 	waypoints_count_limit: 0,
+	last_wp_seq: -1,
 
 	EVENT_KEY_ON_MISSION_WAYPOINTS: 'waypoints',
 	EVENT_KEY_ON_MISSION_WAYPOINT: 'waypoint',
@@ -44,17 +45,17 @@ var mission = {
 	 * Called any time a waypoint is received
 	 *
 	 * @param waypoint
-	 * @emits mission.EVENT_KEY_ON_WAYPOINT
+	 * @emits mission.EVENT_KEY_ON_MISSION_WAYPOINT
 	 */
-	receive_waypoint: function(libsock, waypoint) {
+	receive_waypoint: function(libsock, mavlink, waypoint, limit) {
 
-		mission.waypoints_count++;
+		mission.waypoints_count = waypoint.seq;
 
 		mission.mission_items[waypoint.seq] = waypoint;
-		mission.emit(mission.EVENT_KEY_ON_WAYPOINT);
+		mission.emit(mission.EVENT_KEY_ON_MISSION_WAYPOINT);
 
 		if(!mission.waypoints_request_isFinished) {
-			mission.request_waypoint(libsock, mission.waypoints_count);
+			mission.request_waypoint(libsock, mavlink, mission.waypoints_count + 1, limit);
 		} else {
 			mission.end_request_waypoints();
 		}
@@ -65,19 +66,18 @@ var mission = {
 	 * Receives total number of waypoints to fetch.
 	 * Receiving a waypoint count begins starts a new process
 	 * of fetching waypoints. When this process is finished,
-	 * a mission.EVENT_KEY_ON_WAYPOINTS event is emitted.
+	 * a mission.EVENT_KEY_ON_MISSION_WAYPOINTS event is emitted.
 	 *
 	 * @param limit 	int 	total number of waypoints to request
 	 */
-	receive_waypoint_count: function(libsock, limit) {
+	receive_waypoint_count: function(libsock, mavlink, limit) {
 
 		if(!mission.is_received_waypoint_count(true)) {
 			clearTimeout(mission.waypoints_request_timeout);
 		}
 
-		mission.waypoints_count_limit = limit;
 		mission.waypoints_count = 0;
-		mission.request_waypoint(libsock, 0);
+		mission.request_waypoint(libsock, mavlink, 0, limit);
 
 	},
 
@@ -88,19 +88,26 @@ var mission = {
  	 * @param libsock 	Object 	socket manager, used to request a new waypoint by
 	 * 	using the mavlink outgoing socket to send a message to the ground station.
 	 */
-	request_waypoint: function(libsock, count) {
+	request_waypoint: function(libsock, mavlink, wp_seq, limit) {
 
-		if(count == mission.waypoints_count_limit) {
-			mission.waypoints_request_isFinished = true;
+		if(mission.last_wp_seq == wp_seq) {
+			return;
 		}
 
-		utils.log('request_mission_item> requesting item #' + count + ' / ' + limit);
+		mission.last_wp_seq = wp_seq;
+
+		if(mission.last_wp_seq == limit) {
+			mission.waypoints_request_isFinished = true;
+			return;
+		}
+
+		utils.log('request_mission_item> requesting item #' + (mission.last_wp_seq + 1) + '/' + limit);
 
 		mavlink.send_message(libsock, 'MISSION_REQUEST', {
 
 			'target_system': 1,
 			'target_component': 1,
-			'seq': count
+			'seq': mission.last_wp_seq
 
 		}, config.get_config('mavlink').outgoing_host, config.get_config('mavlink').outgoing_port, function(err, response) {
 			utils.log('mavlink>MISSION_REQUEST> sent MISSION_ITEM request');
@@ -118,8 +125,6 @@ var mission = {
 	 *	waypoints request does not happen in less than 30 seconds.
 	 */
 	request_waypoints: function(libsock, mavlink) {
-
-		utils.log('mavlink> sending MISSION_REQUEST_LIST...');
 
 		clearTimeout(mission.waypoints_request_timeout);
 
@@ -155,9 +160,11 @@ var mission = {
 	 * Ends a request for n amount of waypoints begun
 	 * by calling mission.request_waypoints.
 	 *
-	 * @emits mission.EVENT_KEY_ON_WAYPOINTS
+	 * @emits mission.EVENT_KEY_ON_MISSION_WAYPOINTS
 	 */
 	end_request_waypoints: function() {
+
+		console.log('INFO MISSION WAYPOINTS request ended. Collected', (mission.waypoints_count + 1) + '/' + mission.waypoints_count_limit, 'items.');
 
 		// reset mission retrieval flags and temp array
 		clearTimeout(mission.waypoints_request_timeout);

@@ -74,7 +74,7 @@ var waypoints = {
 			waypoints._is_changed = true;
 		}		
 
-		waypoints.last_waypoint = last_waypoint;
+		waypoints.last_waypoint = previous_waypoint;
 		waypoints.next_waypoint = next_waypoint;
 		waypoints.following_waypoint = following_waypoint;
 		waypoints.current_waypoint = current_waypoint;

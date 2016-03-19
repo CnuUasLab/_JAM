@@ -20,6 +20,8 @@ var api = {
 		var followingWaypoint = waypoints.get_following_waypoint();
 
 		if(!prevWaypoint || !nextWaypoint || !followingWaypoint) {
+
+			console.log('WARN API', 'No waypoints available ( prev nxt foll ) -> (', prevWaypoint, nextWaypoint, followingWaypoint, '), sending sample data...');
 			return {
 				"grid_width": 100,
 				"grid_height": 400,
@@ -54,8 +56,10 @@ var api = {
 					"theta": 350
 				}
 			};
+
 		}
 
+		console.log('API', 'Sending realtime data');
 		grid.set_width(config.get_config('grid').grid_width);
 
 		// calculate distance from last waypoint to next

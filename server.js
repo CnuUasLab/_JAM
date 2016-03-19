@@ -70,14 +70,14 @@ var server = {
 	 */
 	receive_api_target_request: function(request, response, auvsi) {
 
-		console.log('RELAY server>function>receive_api_target_request> Relaying api target request');
+		console.log('RELAY SERVER FUNC(receive_api_target_request) Relaying api target request');
 		server.receive_api_request(request, response);
 
 		if(request.method == 'POST') {
 			return server.handle_post_request(request, function(err, data) {
 
 				if(err) {
-					console.log('ERR RELAY server>function>handle_post_request> ' + err);
+					console.log('ERR RELAY SERVER FUNC(handle_post_request) ' + err);
 					response.writeHead(500);
 					return response.end(err);
 				}
@@ -85,12 +85,12 @@ var server = {
 				auvsi.post(request.url, data, function(res_err, res_data) {
 
 					if(res_err) {
-						console.log('ERR RELAY server>function>receive_api_target_request> ' + res_err);
+						console.log('ERR RELAY SERVER FUNC(receive_api_target_request) ' + res_err);
 						response.writeHead(500);
 						return response.end(res_err);
 					}
 
-					console.log('RELAY server>function>receive_api_target_request> Successfully relayed api target request');
+					console.log('RELAY SERVER FUNC(receive_api_target_request) Successfully relayed api target request');
 					response.end(res_data);
 
 				});
@@ -101,12 +101,12 @@ var server = {
 			auvsi.get(request.url, function(err, data) {
 
 				if(err) {
-					console.log('ERR RELAY server>function>handle_post_request> ' + err);
+					console.log('ERR RELAY SERVER FUNC(handle_post_request) ' + err);
 					response.writeHead(500);
 					return response.end(err);
 				}
 
-				console.log('RELAY server>function>receive_api_target_request> Successfully relayed api target request');
+				console.log('RELAY SERVER FUNC(receive_api_target_request) Successfully relayed api target request');
 				response.end(data);
 
 			});

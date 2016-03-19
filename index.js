@@ -33,7 +33,7 @@ var config 						= require('./config.js');
  */
 function init_listeners() {
 
-	utils.log('interop> ready.');
+	utils.log('_JAM V1.0');
 
 	var telemetryCount = 0;
 	var lastTelemetryFreq = 0;
@@ -105,6 +105,7 @@ function init_listeners() {
 
 	// subscribe to mission waypoints received events
 	mission.on('waypoints', function(data) {
+		console.log('_JAM WAYPOINTS', 'received', data);
 		waypoints.set_waypoints(data);
 	});
 
@@ -115,7 +116,8 @@ function init_listeners() {
 
 	// listen for response after sending MISSION_REQUEST_LIST message
 	mavlink.incoming.on('MISSION_COUNT', function(message, fields) {
-		mission.receive_waypoint_count(libsock, fields.count);
+		mission.waypoints_count_limit = fields.count;
+		mission.receive_waypoint_count(libsock, mavlink, fields.count);
 	});
 
 	// retireve current waypoint
@@ -144,11 +146,11 @@ function init_listeners() {
 	 * Handle waypoint data from GCS
 	 */
 	mavlink.incoming.on('MISSION_ITEM', function(message, fields) {
-		mission.receive_waypoint(libsock, fields);
+		mission.receive_waypoint(libsock, mavlink, fields, mission.waypoints_count_limit);
 	});
 
 	mavlink.incoming.on('STATUSTEXT', function(message, fields) {
-		utils.log('mavl>incoming> received status text');
+		utils.log('MAVLINK INCOMING received status text');
 	});
 
 	/**
