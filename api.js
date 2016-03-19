@@ -16,7 +16,7 @@ var api = {
 	get_grid_details: function(telemetry, waypoints) {
 
 		var prevWaypoint = waypoints.get_last_waypoint();
-		var nextWaypoint = waypoints.get_next_waypoint()
+		var nextWaypoint = waypoints.get_next_waypoint();
 		var followingWaypoint = waypoints.get_following_waypoint();
 
 		if(!prevWaypoint || !nextWaypoint || !followingWaypoint) {
@@ -56,7 +56,7 @@ var api = {
 			};
 		}
 
-		grid.set_width(config.get_config('grid').grid_with);
+		grid.set_width(config.get_config('grid').grid_width);
 
 		// calculate distance from last waypoint to next
 		// waypoint padding also added to grid begin / end
@@ -70,7 +70,7 @@ var api = {
 			
 			grid.get_grid().grid_height += (config.get_config('grid').grid_padding_height);
 
-			grid.set_goal_lat(config.get_config('grid').grid_with / 2);
+			grid.set_goal_lat(config.get_config('grid').grid_width / 2);
 
 		}
 
@@ -90,7 +90,7 @@ var api = {
 			theta += 360;
 		}
 
-		grid.set_location_lat(location.x + (config.get_config('grid').grid_with / 2));
+		grid.set_location_lat(location.x + (config.get_config('grid').grid_width / 2));
 		grid.set_location_lon(location.y + config.get_config('grid').grid_padding_height);
 		grid.set_location_theta(theta);
 
