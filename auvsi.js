@@ -231,19 +231,11 @@ var auvsi = {
 
 				auvsi.get_response(response, function(data) {
 
-					if(data == 'UAS Telemetry Successfully Posted.') {
-
-						if(mavlink.get_previous_time_boot() == mavlink.get_time_boot()) {
-							utils.log('INFO AUVSI TELEMETRY No new telemetry received. Posting previously received telemetry...');
-						} else {
-							utils.log('INFO AUVSI TELEMETRY Successfully posted updated telemetry.');
-						}
-
-						mavlink.set_previous_time_boot(mavlink.get_time_boot());
-
-					} else {
-						utils.log('ERR AUVSI TELEMETRY ' + data);
+					if(data != 'UAS Telemetry Successfully Posted.') {
+						return utils.log('ERR AUVSI TELEMETRY ' + data);
 					}
+
+					mavlink.set_previous_time_boot(mavlink.get_time_boot());
 
 				});
 
