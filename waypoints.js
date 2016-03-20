@@ -10,9 +10,7 @@ var waypoints = {
 	next_waypoint: null,
 	current_waypoint: null,
 
-	// marks the waypoint to visit
-	// immediately after next_waypoint
-	following_waypoint: null,
+	_waypoint_count: 0,
 
 	waypoints: {},
 
@@ -36,18 +34,18 @@ var waypoints = {
 	get_current_waypoint: function() {
 		return waypoints.current_waypoint;
 	},
-
-	get_following_waypoint: function() {
-		return waypoints.following_waypoint;
+	
+	get_waypoint_count: function() {
+		return waypoints._waypoint_count;
 	},
 
 	/**
 	 * Setting the current waypoint will also set the
-	 * next, previous, and following waypoints. If the
+	 * next, previous, and next waypoints. If the
 	 * argument passed does not correspond to a waypoint
 	 * that has previously been set, or if the argument
 	 * modified (+1, -1) to retrieve next, previous, or
-	 * following waypoints points to a waypoint that does
+	 * next waypoints points to a waypoint that does
 	 * not exist or has not yet been set, then that
 	 * waypoint will be set to NULL.
 	 *
@@ -62,32 +60,113 @@ var waypoints = {
 	 * waypoint being set as the current waypoint, or
 	 * NULL if the current_waypoint does not exist.
 	 */
-	set_current_waypoint: function(wpt_key) {
+	set_current_waypoint: function(mavl, wpt_key) {
 
-		var current_waypoint = waypoints.get_waypoint(wpt_key) || null;
-		var next_waypoint = waypoints.get_waypoint(wpt_key + 1) || null;
-		var previous_waypoint = waypoints.get_waypoint(wpt_key - 1) || null;
-		var following_waypoint = waypoints.get_waypoint(wpt_key + 2) || null;
+		if(waypoints.get_current_waypoint() && (wpt_key == waypoints.get_current_waypoint().seq)) {
+			return;
+		}
 
-		if((!waypoints.next_waypoint && next_waypoint)
-		|| (waypoints.next_waypoint.x != next_waypoint.x || waypoints.next_waypoint.y != next_waypoint.y)) {
+		// assumes we are following waypoints in order
+		var previous_waypoint = waypoints.get_current_waypoint();
+		var current_waypoint = waypoints.get_waypoint(waypoints.get_next_nav_cmd(mavl, wpt_key));
+		var next_waypoint = current_waypoint ? waypoints.get_waypoint(waypoints.get_next_nav_cmd(mavl, current_waypoint.seq)) : null;
+
+		if((previous_waypoint && waypoints.get_last_waypoint() && waypoints.get_last_waypoint().seq != previous_waypoint.seq) 
+			|| (current_waypoint && waypoints.get_current_waypoint() && waypoints.get_current_waypoint().seq != current_waypoint.seq)
+			|| (next_waypoint && waypoints.get_next_waypoint() && waypoints.get_next_waypoint().seq != next_waypoint.seq)) {
 			waypoints._is_changed = true;
-		}		
+		}
 
 		waypoints.last_waypoint = previous_waypoint;
-		waypoints.next_waypoint = next_waypoint;
-		waypoints.following_waypoint = following_waypoint;
 		waypoints.current_waypoint = current_waypoint;
+		waypoints.next_waypoint = next_waypoint;
 
-		return current_waypoint ? wpt_key : null;
+		return current_waypoint ? current_waypoint.seq : null;
 	},
 
 	/**
-	 * Sets a collection of waypoints as the current
-	 * mission items.
+	 * Determines if wpt_key corresponds
+	 * to a navigation instruction, such as jpm
+	 */
+	is_nav_cmd: function(mavl, wpt_key) {
+		return waypoints.get_waypoint(wpt_key).command <= mavl.get_mav_const('MAV_CMD', 'MAV_CMD_NAV_LAST');
+	},
+
+	/**
+	 * From a "current" waypoint id passed, the next
+	 * non special waypoint nav command wpt_key is returned.
+	 * if no other normal nav waypoint cmds are not found,
+	 * null is returned.
+	 */
+	get_next_nav_cmd: function(mavl, wpt_key) {
+
+		var current_wpt_key = wpt_key;
+
+		while(current_wpt_key < waypoints.get_waypoint_count()) {
+			
+			if(!waypoints.get_next_cmd(mavl, current_wpt_key)) {
+				return null;
+			}
+
+			if(waypoints.is_nav_cmd(mavl, current_wpt_key)) {
+				return current_wpt_key;
+			}
+
+			current_wpt_key++;
+		}
+
+		return current_wpt_key;
+	},
+
+	/**
+	 * Assumes intent is to always follow jumps in nav cmd list
+	 */
+	get_next_cmd: function(mavl, wpt_key) {
+
+		var current_wpt_key = wpt_key;
+		var current_wpt = null;
+		var max_loops = 64; // mage nums ftw
+		var wpt_jump_key = -1;
+
+		while(current_wpt_key < waypoints.get_waypoint_count()) {
+
+			current_wpt = waypoints.get_waypoint(current_wpt_key);
+			if(current_wpt.command == mavl.get_mav_const('MAV_CMD', 'MAV_CMD_DO_JUMP')) {
+				
+				if(max_loops-- == 0) {
+					return null;
+				}
+				
+				if(current_wpt.param1 >= waypoints.get_waypoint_count() || current_wpt.param1 == 0) {
+					return null;
+				}
+
+				if(wpt_jump_key == current_wpt_key) {
+					return null;
+				}
+
+				if(wpt_jump_key == -1) {
+					wpt_jump_key = current_wpt_key;
+				}
+
+				current_wpt_key = current_wpt.param1;
+
+			} else {
+				return current_wpt_key;
+			}
+		}
+
+		return null;
+
+	},
+
+	/**
+	 * Sets a received collection of MISSION_ITEM
+	 * as the current waypoints.
 	 */
 	set_waypoints: function(waypts) {
 		waypoints.waypoints =  waypts;
+		waypoints._waypoint_count = Object.keys(waypts).length;
 	},
 
 	is_changed: function(arg) {
