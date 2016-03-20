@@ -16,12 +16,14 @@ var api = {
 	get_grid_details: function(telemetry, waypoints) {
 
 		var prevWaypoint = waypoints.get_last_waypoint();
+		var currentWaypoint = waypoints.get_current_waypoint();
 		var nextWaypoint = waypoints.get_next_waypoint();
-		var followingWaypoint = waypoints.get_following_waypoint();
 
-		if(!prevWaypoint || !nextWaypoint || !followingWaypoint) {
+		if(!prevWaypoint || !currentWaypoint || !nextWaypoint) {
 
-			console.log('WARN API', 'No waypoints available ( prev nxt foll ) -> (', prevWaypoint, nextWaypoint, followingWaypoint, '), sending sample data...');
+			console.log('WARN API', 'No waypoints available ( prev curr nxt ) \
+				-> (', prevWaypoint, currentWaypoint, nextWaypoint, '), \
+				sending sample waypoint data...');
 			return {
 				"grid_width": 100,
 				"grid_height": 400,
@@ -59,15 +61,15 @@ var api = {
 
 		}
 
-		console.log('API', 'Sending realtime data');
+		console.log('API', 'Sending live waypoint data...');
 		grid.set_width(config.get_config('grid').grid_width);
 
 		// calculate distance from last waypoint to next
 		// waypoint padding also added to grid begin / end
-		if(prevWaypoint && nextWaypoint) {
+		if(prevWaypoint && currentWaypoint) {
 			
 			grid.set_height(
-				grid.set_goal_lon(libmath.get_distance(prevWaypoint, nextWaypoint) 
+				grid.set_goal_lon(libmath.get_distance(prevWaypoint, currentWaypoint) 
 					+ (config.get_config('grid').grid_padding_height)
 				)
 			);
@@ -78,17 +80,17 @@ var api = {
 
 		}
 
-		if(followingWaypoint) {
+		if(nextWaypoint) {
 
-			var theta_wptLast_wptNext = libmath.get_bearing(prevWaypoint, nextWaypoint);
-			var theta_wptNext_wptFollowing = libmath.get_bearing(nextWaypoint, followingWaypoint);
+			var theta_wptLast_wptCurr = libmath.get_bearing(prevWaypoint, currentWaypoint);
+			var theta_wptNext_wptNext = libmath.get_bearing(currentWaypoint, nextWaypoint);
 
-			grid.set_goal_theta(theta_wptNext_wptFollowing - theta_wptLast_wptNext);
+			grid.set_goal_theta(theta_wptNext_wptNext - theta_wptLast_wptCurr);
 		}
 
 		// calculate plane location
-		var location = libmath.get_distance_from_path(telemetry.get_coords(), prevWaypoint, nextWaypoint);
-		var theta = telemetry.get_heading() - libmath.get_bearing(prevWaypoint, followingWaypoint);
+		var location = libmath.get_distance_from_path(telemetry.get_coords(), prevWaypoint, currentWaypoint);
+		var theta = telemetry.get_heading() - libmath.get_bearing(prevWaypoint, nextWaypoint);
 
 		if(theta < 360) {
 			theta += 360;
