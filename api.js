@@ -64,7 +64,7 @@ var api = {
 		console.log('API', 'Sending live waypoint data...');
 		grid.set_width(config.get_config('grid').grid_width);
 
-		// calculate distance from last waypoint to next
+		// calculate distance from last waypoint to current
 		// waypoint padding also added to grid begin / end
 		if(prevWaypoint && currentWaypoint) {
 			
@@ -83,14 +83,14 @@ var api = {
 		if(nextWaypoint) {
 
 			var theta_wptLast_wptCurr = libmath.get_bearing(prevWaypoint, currentWaypoint);
-			var theta_wptNext_wptNext = libmath.get_bearing(currentWaypoint, nextWaypoint);
+			var theta_wptCurr_wptNext = libmath.get_bearing(currentWaypoint, nextWaypoint);
 
-			grid.set_goal_theta(theta_wptNext_wptNext - theta_wptLast_wptCurr);
+			grid.set_goal_theta(theta_wptCurr_wptNext - theta_wptLast_wptCurr);
 		}
 
 		// calculate plane location
 		var location = libmath.get_distance_from_path(telemetry.get_coords(), prevWaypoint, currentWaypoint);
-		var theta = telemetry.get_heading() - libmath.get_bearing(prevWaypoint, nextWaypoint);
+		var theta = telemetry.get_heading() - libmath.get_bearing(prevWaypoint, currentWaypoint);
 
 		if(theta < 360) {
 			theta += 360;
