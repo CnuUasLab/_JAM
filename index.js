@@ -105,7 +105,7 @@ function init_listeners() {
 
 	// subscribe to mission waypoints received events
 	mission.on('waypoints', function(data) {
-		console.log('_JAM WAYPOINTS', 'received', data);
+		console.log('_JAM WAYPOINTS received');
 		waypoints.set_waypoints(data);
 	});
 
@@ -123,21 +123,16 @@ function init_listeners() {
 	// retireve current waypoint
 	mavlink.incoming.on('MISSION_CURRENT', function(message, fields) {
 
-		// determine if waypoint exists
-		// and update waypoints for api
+		// determine if waypoint exists and update
+		// waypoints for api. Setting the current waypt
+		// sets the next, previous, and following waypoints
 		if(waypoints.get_waypoint(fields.seq)) {
+			return waypoints.set_current_waypoint(mavlink, fields.seq);
+		}
 
-			// setting the current waypoint also sets the
-			// next, previous, and following waypoints
-			waypoints.set_current_waypoint(fields.seq);
-
-		} else {
-
-			// assume no waypoints have been requested / loaded
-			if(!mission.is_received_waypoint_count()) {
-				mission.request_waypoints(libsock, mavlink);
-			}
-
+		// assume no waypoints have been requested / loaded
+		if(!mission.is_received_waypoint_count()) {
+			mission.request_waypoints(libsock, mavlink);
 		}
 
 	});
