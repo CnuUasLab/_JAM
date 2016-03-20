@@ -23,7 +23,7 @@ var libmath = {
 	 */
 	longitude_scale: function(waypoint) {
 		
-		var scale = Math.cos(waypoint.y * -0.0000001 * DEG_TO_RAD);
+		var scale = Math.cos(waypoint.x * DEG_TO_RAD);
     	return libmath.constrain_float(scale, 0.01, 1.0);
 	
 	},
@@ -144,11 +144,12 @@ var libmath = {
 
 	/**
 	 * Returns theta (angle in degrees) between one waypoint and another
+	 * Assumes waypoint.x is latitude, waypoint.y is longitude
 	 */
 	get_bearing: function(waypoint1, waypoint2) {
 
-		var off_x = waypoint2.x - waypoint1.x;
-		var off_y = (waypoint2.y - waypoint1.y) / libmath.longitude_scale(waypoint2);
+		var off_x = waypoint2.y - waypoint1.y;
+		var off_y = (waypoint2.x - waypoint1.x) / libmath.longitude_scale(waypoint2);
 
 		var bearing = 9000 + Math.atan2(-off_y, off_x) * 5729.57795;
 

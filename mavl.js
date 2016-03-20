@@ -19,7 +19,9 @@ var mavl = {
 	previous_time_boot: null,
 
 	callbacks: {},
-	consts: {},
+	consts: {
+		'MAV_CMD_NAV_LAST': 95
+	},
 
 	incoming: null,
 	outgoing: null,
@@ -187,16 +189,16 @@ var mavl = {
 
 	get_mav_const: function(enum_name, const_name) {
 
-		if(!mavl.consts.const_name) {
-			mavl.consts.const_name = mavl.incoming.enums.filter(function(item) {
+		if(!mavl.consts[const_name]) {
+			mavl.consts[const_name] = mavl.incoming.enums.filter(function(item) {
 				return item.$.name == enum_name;
 			})[0].entry.filter(function(item) {
 				return item.$.name == const_name;
 			})[0].$.value;
-			return;
+			return mavl.consts[const_name];
 		}
 
-		return mavl.consts.const_name;
+		return mavl.consts[const_name];
 
 	},
 

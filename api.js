@@ -85,6 +85,9 @@ var api = {
 			var theta_wptLast_wptCurr = libmath.get_bearing(prevWaypoint, currentWaypoint);
 			var theta_wptCurr_wptNext = libmath.get_bearing(currentWaypoint, nextWaypoint);
 
+			console.log('INFO API Theta bearing theta_wptLast_wptCurr', theta_wptLast_wptCurr);
+			console.log('INFO API Theta bearing theta_wptCurr_wptNext', theta_wptCurr_wptNext, '(curr, next) -> (', currentWaypoint, nextWaypoint, ')');
+
 			grid.set_goal_theta(theta_wptCurr_wptNext - theta_wptLast_wptCurr);
 		}
 

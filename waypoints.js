@@ -69,7 +69,11 @@ var waypoints = {
 		// assumes we are following waypoints in order
 		var previous_waypoint = waypoints.get_current_waypoint();
 		var current_waypoint = waypoints.get_waypoint(waypoints.get_next_nav_cmd(mavl, wpt_key));
-		var next_waypoint = current_waypoint ? waypoints.get_waypoint(waypoints.get_next_nav_cmd(mavl, current_waypoint.seq)) : null;
+		var next_waypoint = current_waypoint ? waypoints.get_waypoint(waypoints.get_next_nav_cmd(mavl, current_waypoint.seq + 1)) : null;
+
+		if(previous_waypoint && current_waypoint && next_waypoint) {
+			console.log('INFO WAYPOINTS waypoint #' + wpt_key + ' reached (prev, current, next waypoints are now defined).');
+		}
 
 		if((previous_waypoint && waypoints.get_last_waypoint() && waypoints.get_last_waypoint().seq != previous_waypoint.seq) 
 			|| (current_waypoint && waypoints.get_current_waypoint() && waypoints.get_current_waypoint().seq != current_waypoint.seq)
@@ -104,7 +108,9 @@ var waypoints = {
 
 		while(current_wpt_key < waypoints.get_waypoint_count()) {
 			
-			if(!waypoints.get_next_cmd(mavl, current_wpt_key)) {
+			current_wpt_key = waypoints.get_next_cmd(mavl, current_wpt_key)
+			
+			if(!current_wpt_key) {
 				return null;
 			}
 
@@ -150,6 +156,7 @@ var waypoints = {
 				}
 
 				current_wpt_key = current_wpt.param1;
+				console.log('WAYPOINTS NEXT_CMD taking jump to waypoint #' + waypoints.get_waypoint(current_wpt_key).seq);
 
 			} else {
 				return current_wpt_key;
