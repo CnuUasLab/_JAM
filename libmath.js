@@ -54,8 +54,12 @@ var libmath = {
 		waypoint2.x *= 1e7;
 		waypoint2.y *= 1e7;
 
+		console.log("INFO LIBMATH get_distance", " waypoint1:", waypoint1, " waypoint2:", waypoint2);
+
 		var delta_lat = waypoint2.x - waypoint1.x;
 		var delta_lon = (waypoint2.y - waypoint1.y) * libmath.longitude_scale(waypointA);
+
+		console.log("INFO LIBMATH get_distance delta_lat:",delta_lat ," delta_lon:", delta_lon);
 
 		return (Math.sqrt(Math.pow(delta_lat, 2) + Math.pow(delta_lon, 2))) * LOCATION_SCALING_FACTOR;
 
@@ -87,10 +91,8 @@ var libmath = {
 				location1[i] *= 1e7;
 
 				if(i == 'y') {
-					location1[i] *= libmath.longitude_scale(location);
+					location1[i] *= libmath.longitude_scale(waypointA);
 				}
-
-				location1[i] *= LOCATION_SCALING_FACTOR;
 
 			}
 		}
@@ -107,8 +109,6 @@ var libmath = {
 					waypoint1[i] *= libmath.longitude_scale(waypointA);
 				}
 
-				waypoint1[i] *= LOCATION_SCALING_FACTOR;
-
 			}
 		}
 
@@ -121,24 +121,26 @@ var libmath = {
 				waypoint2[i] *= 1e7;
 
 				if(i == 'y') {
-					waypoint2[i] *= libmath.longitude_scale(waypointB);
+					waypoint2[i] *= libmath.longitude_scale(waypointA);
 				}
-
-				waypoint2[i] *= LOCATION_SCALING_FACTOR;
 
 			}
 		}
 
+		console.log("INFO LIBMATH get_distance_from_path loc:", location1, " waypoint1:", waypoint1, " waypoint2:", waypoint2);
+
 		var location_waypoint1 = { x: waypoint1.x - location1.x, y: waypoint1.y - location1.y };
 		var waypoint_delta = { x: waypoint1.x - waypoint2.x, y: waypoint1.y - waypoint2.y };
+		console.log("INFO LIBMATH get_distance_from_path loc_wpt1:",location_waypoint1," wpt_delta:", waypoint_delta);
+
 
 		var dot = (location_waypoint1.x * waypoint_delta.x) + (location_waypoint1.y * waypoint_delta.y);
 		var cross = (location_waypoint1.x * waypoint_delta.y) - (location_waypoint1.y * waypoint_delta.x);
 		var dist = Math.sqrt(Math.pow(waypoint_delta.x, 2) + Math.pow(waypoint_delta.y, 2));
 
 		return {
-			x: cross / dist,
-			y: dot / dist
+			x: (cross / dist) * LOCATION_SCALING_FACTOR,
+			y: (dot / dist) * LOCATION_SCALING_FACTOR
 		}
 
 	},
