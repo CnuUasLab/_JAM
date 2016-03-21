@@ -1,5 +1,5 @@
 /**
- * Map that helps visualize obsticle location using Open Street Map as a
+ * In Development -- Map that helps visualize obsticle location using Open Street Map as a
  * dependency for the application. Obsticle updates, and creations are
  * specified in methods, and functions.
  *
@@ -8,8 +8,10 @@
 
 
     //Create the Map from the Open Layers Dependency from OSM.
-    map = new OpenLayers.Map("mapdiv");
-    map.addLayer(new OpenLayers.Layer.OSM());
+map = new OpenLayers.Map("mapdiv");
+
+var map_layer = new OpenLayers.Layer.OSM("Local Tiles", "map_app/tiles/${z}/${x}/${y}.png");
+    map.addLayer(map_layer);
 
     // Has the stationary obstacle array been called yet?
     hasBeenCalled = false; 
@@ -25,9 +27,11 @@
         isBaseLayer: true,
         renderers: ['SVG', 'Canvas', 'VML']
     });
+
     var Obst_Layer = new OpenLayers.Layer.Vector("Overlay_Obst", {
         renderers: ['SVG', 'Canvas', 'VML']
     });
+ 
     var planeLayer = new OpenLayers.Layer.Vector("Plane", {
         renderers: ['SVG', 'Canvas', 'VML']
     });
@@ -38,14 +42,14 @@
 										map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI SUAS Competition'} ,
         { externalGraphic: 'map_app/img/star_plane.png', 
-          graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25 }
+          graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25, graphicZIndex:12 }
     );
 
     //Add the Plane's Icon automatically to the center of the runway.
     // vectorLayer.addFeatures(feature);
     map.addLayer(vectorLayer);
     map.addLayer(Obst_Layer);
-    map.addLayer(planeLayer);
+    map.addLayer(planeLayer); 
 
     // Where to position the map (Initially)
     var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
@@ -95,7 +99,7 @@ function changePlaneLoc(lon, lat, hdg) {
     feature = new OpenLayers.Feature.Vector(
         new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
         {description:'X-8 Plane for AUVSI Competition'} ,
-        {externalGraphic:'map_app/img/airplane.png', graphicHeight: 35, graphicWidth: 35, graphicXOffset:-12, graphicYOffset:-25, rotation: hdg }
+        {externalGraphic:'map_app/img/airplane.png', graphicHeight: 35, graphicWidth: 35, graphicXOffset:-14.5, graphicYOffset:-25, rotation: hdg }
     );
  
     
@@ -197,7 +201,7 @@ function createMovingObsticle(lon, lat, size, id) {
     obst_mov = new OpenLayers.Feature.Vector(
 		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
               {description: 'Is an Obstacle'},
-	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4), graphicXOffset:-12, graphicYOffset:-25}
+	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25}
 					                                   );
     // JSON object we use to store obsticle information.
     var ObjectToInsert = {
@@ -230,7 +234,7 @@ function changeMovingObsticleLoc(lon, lat, size, id) {
 	    curr = new OpenLayers.Feature.Vector(
 						 new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
 						 {description: id} ,
-						 {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size*4), graphicWidth: (size*4), graphicXOffset:-12, graphicYOffset:-25 }
+						 {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25 }
 						 );
 
 	    movingObstacles.Obsticle = curr;
