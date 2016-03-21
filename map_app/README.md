@@ -7,9 +7,8 @@ This is the application that runs the google maps app that will display via mark
 Since we have to access tiles locally on the flight field the map application will be using tiles that we download into the tiles folder on the internet.
 To download the tiles:
 
-   Run the following commands on a Mac OSX terminal or on a Linux command prompt:
-   
-      <b> Note you will need cURL to run this. </b>
+   Run the following commands on a Mac OSX terminal or on a Linux command prompt:                                                      
+   <b> Note you will need cURL to run this. </b>
  
 `curl "http://c.tile.openstreetmap.org/18/754[05-30]/1009[70-90].png" -o "tiles/#1/754#2/1009#3.png" --create-dirs`     
 `curl "http://c.tile.openstreetmap.org/17/377[00-24]/504[80-99].png" -o "tiles/17/377#1/504#2.png" --create-dirs`       
