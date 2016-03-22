@@ -16,7 +16,7 @@ map.addLayer(map_layer);
 // Has the stationary obstacle array been called yet?
 hasBeenCalled = false; 
 
-//Count for clearing the Obstacle layer
+//Count for redrawing the map to prevent tile rendering issues.
 count = 0;
 
 //Zoom into the map that we use for viewing.
@@ -108,10 +108,15 @@ function changePlaneLoc(lon, lat, hdg) {
         .transform(                                                             
 		   new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
 		   map.getProjectionObject() // to Spherical Mercator Projection       
-										);
-
+		   									);
+    
     if(!hasMoved) {
-        map.setCenter(lonLat); // TODO: Should we use panTo? Find a way that tiles done render over markers. 
+	count = count + 1;
+	if (count % 20 == 0) {
+	    map.setCenter(lonLat);
+	} else {
+	    map.panTo(lonLat);
+	}
     }
 }
 
