@@ -7,78 +7,77 @@
  */
 
 
-    //Create the Map from the Open Layers Dependency from OSM.
+//Create the Map from the Open Layers Dependency from OSM.
 map = new OpenLayers.Map("mapdiv");
 
 var map_layer = new OpenLayers.Layer.OSM("Local Tiles", "map_app/tiles/${z}/${x}/${y}.png");
-    map.addLayer(map_layer);
+map.addLayer(map_layer);
 
-    // Has the stationary obstacle array been called yet?
-    hasBeenCalled = false; 
+// Has the stationary obstacle array been called yet?
+hasBeenCalled = false; 
 
-    //Count for clearing the Obstacle layer
-    count = 0;
+//Count for clearing the Obstacle layer
+count = 0;
 
-    //Zoom into the map that we use for viewing.
-    var zoom = 17;
+//Zoom into the map that we use for viewing.
+var zoom = 17;
 
-    //Create global vector layers for the obstacles and the plane.
-    var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
+//Create global vector layers for the obstacles and the plane.
+var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
         isBaseLayer: true,
         renderers: ['SVG', 'Canvas', 'VML']
     });
 
-    var Obst_Layer = new OpenLayers.Layer.Vector("Overlay_Obst", {
+var Obst_Layer = new OpenLayers.Layer.Vector("Overlay_Obst", {
         renderers: ['SVG', 'Canvas', 'VML']
     });
  
-    var planeLayer = new OpenLayers.Layer.Vector("Plane", {
+var planeLayer = new OpenLayers.Layer.Vector("Plane", {
         renderers: ['SVG', 'Canvas', 'VML']
     });
 
-    //Make the plane marker for the Open Layers Marker layer.
-    var feature = new OpenLayers.Feature.Vector(
-	new OpenLayers.Geometry.Point(-76.427991, 38.144616).transform(new OpenLayers.Projection("EPSG:4326"),
-										map.getProjectionObject()),
-        {description:'X-8 Plane for AUVSI SUAS Competition'} ,
-        { externalGraphic: 'map_app/img/star_plane.png', 
-          graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25, graphicZIndex:12 }
-    );
+//Make the plane marker for the Open Layers Marker layer.
+var feature = new OpenLayers.Feature.Vector(
+	      new OpenLayers.Geometry.Point(-76.427991, 38.144616).transform(new OpenLayers.Projection("EPSG:4326"),
+       	      map.getProjectionObject()),
+		  {description:'X-8 Plane for AUVSI SUAS Competition'} ,
+		  { externalGraphic: 'map_app/img/star_plane.png', 
+		  graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25, graphicZIndex:12 });
 
-    //Add the Plane's Icon automatically to the center of the runway.
-    // vectorLayer.addFeatures(feature);
-    map.addLayer(vectorLayer);
-    map.addLayer(Obst_Layer);
-    map.addLayer(planeLayer); 
+//Add the Plane's Icon automatically to the center of the runway.
+// vectorLayer.addFeatures(feature);
+map.addLayer(vectorLayer);
+map.addLayer(Obst_Layer);
+map.addLayer(planeLayer); 
 
-    // Where to position the map (Initially)
-    var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
-            .transform(                                                             
-                  new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
-                  map.getProjectionObject() // to Spherical Mercator Projection       
-             );
-    map.setCenter (lonLat, zoom);
+// Where to position the map (Initially)
+var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
+    .transform(                                                             
+	       new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
+	       map.getProjectionObject() // to Spherical Mercator Projection       
+									    );
+map.setCenter (lonLat, zoom);
 
-    //queue implementation for tracer display. To avoid overload.
-    var queue_plane = [];
+//queue implementation for tracer display. To avoid overload.
+var queue_plane = [];
 
-    //Have the stationary obsticles been called?
-    var StationaryObstBeenCalled = false;
+//Have the stationary obsticles been called?
+var StationaryObstBeenCalled = false;
     
-    //Holds moving obstacles in array in JSON format.
-    var movingObstacles = [];
-    //Has the plane obsticle moved?
-    var hasMoved = false;
+//Holds moving obstacles in array in JSON format.
+var movingObstacles = [];
+//Has the plane obsticle moved?
+var hasMoved = false;
 
 /**
-  * Change the location of the plane marker leaving tracer.
-  * Is called from interoperability.
-  * 
-  * @see _JAM/views/index.html
-  * @param lon - Longitude of new waypoint
-  * @param lat - Latitude of the new waypoint.
-  * @return - updated plane marker.
-  */
+ * Change the location of the plane marker leaving tracer.
+ * Is called from interoperability.
+ * 
+ * @see _JAM/views/index.html
+ * @param lon - Longitude of new waypoint
+ * @param lat - Latitude of the new waypoint.
+ * @return - updated plane marker.
+ */
 function changePlaneLoc(lon, lat, hdg) {
 
     if (queue_plane.length >= 18) {
@@ -97,36 +96,35 @@ function changePlaneLoc(lon, lat, hdg) {
     var trackFeature = feature;
 
     feature = new OpenLayers.Feature.Vector(
-        new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
-        {description:'X-8 Plane for AUVSI Competition'} ,
-        {externalGraphic:'map_app/img/airplane.png', graphicHeight: 35, graphicWidth: 35, graphicXOffset:-14.5, graphicYOffset:-25, rotation: hdg }
-    );
- 
-    
+	      new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"),
+              map.getProjectionObject()),
+	            {description:'X-8 Plane for AUVSI Competition'},
+	            {externalGraphic:'map_app/img/airplane.png',
+                    graphicHeight: 35, graphicWidth: 35, graphicXOffset:-14.5, graphicYOffset:-25, rotation: hdg });
 
     UpdateLayer(null, planeLayer, [feature, trackFeature]);
 
     var lonLat = new OpenLayers.LonLat( lon, lat )                     
         .transform(                                                             
-            new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
-            map.getProjectionObject() // to Spherical Mercator Projection       
-        );
+		   new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
+		   map.getProjectionObject() // to Spherical Mercator Projection       
+										);
 
     if(!hasMoved) {
-        map.panTo(lonLat);
+        map.setCenter(lonLat); // TODO: Should we use panTo? Find a way that tiles done render over markers. 
     }
 }
 
 /**
-  * Update the plane layer so that the plane 
-  * is update with the marker of previous location.
-  * 
-  * @param mapLayer - Open Street Map layer
-  * @param featureLayer - Layer that contains Plane.
-  * @param features - the tracer marker that's used.
-  * 
-  * @return - updated plane layer.
-  */
+ * Update the plane layer so that the plane 
+ * is update with the marker of previous location.
+ * 
+ * @param mapLayer - Open Street Map layer
+ * @param featureLayer - Layer that contains Plane.
+ * @param features - the tracer marker that's used.
+ * 
+ * @return - updated plane layer.
+ */
 function UpdateLayer(mapLayer, featureLayer, features) {
 
     //setting loaded to false unloads the layer//
@@ -166,43 +164,45 @@ function UpdateLayer(mapLayer, featureLayer, features) {
 }
 
 /**
-  * Put a stationary obstacle marker on the map.
-  * 
-  * @param lon - Longitude of the obstacle.
-  * @param lat - Latitude of the obstacle marker.
-  * @param height - height of the cylinder
-  * @param rad - radius of the cylinder
-  * @return - Make obstacle marker appear on the the screen. 
-  */
+ * Put a stationary obstacle marker on the map.
+ * 
+ * @param lon - Longitude of the obstacle.
+ * @param lat - Latitude of the obstacle marker.
+ * @param height - height of the cylinder
+ * @param rad - radius of the cylinder
+ * @return - Make obstacle marker appear on the the screen. 
+ */
 function createStationaryObsticle(lon, lat, height, rad) {
 
     obst = new OpenLayers.Feature.Vector(
-		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"),
-		      	  						      map.getProjectionObject()),
-		      {description: 'Stationary Object'},
-		      {externalGraphic:'map_app/img/cylinder_obst.png', graphicHeight: (height), graphicWidth: (rad*2),
-		      graphicXOffset:-12, graphicYOffset:-25}
-					);
+	   new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"),
+	   map.getProjectionObject()),
+	       {description: 'Stationary Object'},
+	       {externalGraphic:'map_app/img/cylinder_obst.png',
+               graphicHeight: (rad*2), graphicWidth: (rad*2),
+	       graphicXOffset:-12, graphicYOffset:-25});
 
     planeLayer.addFeatures(obst);
 }
 
 /**
-  * Create a moving obstacle marker on the map.
-  * 
-  * @param lon - Longitude of the obstacle.
-  * @param lat - Latitude of the obstacle marker.
-  * @param id - identifufcation for input into array of moving obstacles.
-  * @param size - radius of the sphere.
-  * @return - Make obstacle marker appear on the the screen.
-  */
+ * Create a moving obstacle marker on the map.
+ * 
+ * @param lon - Longitude of the obstacle.
+ * @param lat - Latitude of the obstacle marker.
+ * @param id - identifufcation for input into array of moving obstacles.
+ * @param size - radius of the sphere.
+ * @return - Make obstacle marker appear on the the screen.
+ */
 function createMovingObsticle(lon, lat, size, id) {
     
     obst_mov = new OpenLayers.Feature.Vector(
-		      new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
-              {description: 'Is an Obstacle'},
-	     	      {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25}
-					                                   );
+	       new OpenLayers.Geometry.Point( lon, lat ).transform(new OpenLayers.Projection("EPSG:4326"), 
+               map.getProjectionObject()),
+		   {description: 'Is an Obstacle'},
+		   {externalGraphic:'map_app/img/sphere_obst.png', 
+		    graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25});
+    
     // JSON object we use to store obsticle information.
     var ObjectToInsert = {
 	"Obsticle": obst_mov,
@@ -232,10 +232,11 @@ function changeMovingObsticleLoc(lon, lat, size, id) {
 	    movingObstacles[i].obsticleLocation.push(movingObstacles.Obsticle);
 
 	    curr = new OpenLayers.Feature.Vector(
-						 new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()),
-						 {description: id} ,
-						 {externalGraphic:'map_app/img/sphere_obst.png', graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25 }
-						 );
+		   new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"), 
+                       map.getProjectionObject()),
+		       {description: id} ,
+		       {externalGraphic:'map_app/img/sphere_obst.png', 
+                       graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25 });
 
 	    movingObstacles.Obsticle = curr;
 	    Obst_Layer.addFeatures(curr);
@@ -255,24 +256,27 @@ function changeMovingObsticleLoc(lon, lat, size, id) {
 }
 
 /**
-  * Interop calls this to update obstacle positions
-  * 
-  * @see _JAM/views/index.html
-  * @param Obstaclearr - data sent from the obstacle server contains both moving and stationary obst.
-  * @return - Update the obstacle positions based on data.
-  */
+ * Interop calls this to update obstacle positions
+ * 
+ * @see _JAM/views/index.html
+ * @param Obstaclearr - data sent from the obstacle server contains both moving and stationary obst.
+ * @return - Update the obstacle positions based on data.
+ */
 function arrMovObst(Obstaclearr) {
     if (!StationaryObstBeenCalled) {
         for (var i = 0; i < Obstaclearr.stationary_obstacles.length; i++) {
-            createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, Obstaclearr.stationary_obstacles[i].latitude,
-            Obstaclearr.stationary_obstacles[i].cylinder_height, Obstaclearr.stationary_obstacles[i].cylinder_radius);
+            createStationaryObsticle(Obstaclearr.stationary_obstacles[i].longitude, 
+                                     Obstaclearr.stationary_obstacles[i].latitude,
+                                     Obstaclearr.stationary_obstacles[i].cylinder_height,
+                                     Obstaclearr.stationary_obstacles[i].cylinder_radius);
         }
 
         StationaryObstBeenCalled = true;
     }
 
     for (var i = 0; i < Obstaclearr.moving_obstacles.length; i++) {
-
-        changeMovingObsticleLoc(Obstaclearr.moving_obstacles[i].longitude, Obstaclearr.moving_obstacles[i].latitude, Obstaclearr.moving_obstacles[i].sphere_radius, i);
+        changeMovingObsticleLoc(Obstaclearr.moving_obstacles[i].longitude, 
+                                Obstaclearr.moving_obstacles[i].latitude, 
+                                Obstaclearr.moving_obstacles[i].sphere_radius, i);
     }
 }
