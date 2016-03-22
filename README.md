@@ -33,7 +33,7 @@ To download the tiles:
 `curl "http://c.tile.openstreetmap.org/17/377[00-24]/504[80-99].png" -o "map_app/tiles/17/377#1/504#2.png" --create-dirs`       
 `curl "http://c.tile.openstreetmap.org/16/188[52-58]/252[42-49].png" -o "map_app/tiles/16/188#1/252#2.png" --create-dirs`       
 
-   <i> If you are testing in SITL you need to download the tiles to allow SITL to run </i>
+   <i> If you are testing in SITL you need to download the tiles to view tiles in Australia </i>
 
 `curl "http://b.tile.openstreetmap.org/16/599[10-25]/396[45-65].png" -o "map_app/tiles/16/599#1/396#2.png" --create-dirs`       
 `curl "http://a.tile.openstreetmap.org/17/1198[35-55]/793[08-28].png" -o "map_app/tiles/17/1198#1/793#2.png" --create-dirs`        
