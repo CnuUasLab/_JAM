@@ -311,14 +311,14 @@ var auvsi = {
 	},
 
 	/**
-	 * Generic post request to auvsi server
+	 * Generic post / put request to auvsi server
 	 */
-	post: function(path, data, callback) {
+	post: function(path, method, data, callback) {
 
 		callback = callback || function() {};
 
 		var request = http.request({
-			method: 'POST',
+			method: method || 'POST',
 			path: path,
 			host: config.get_config('auvsi').host,
 			port: config.get_config('auvsi').port,
@@ -343,15 +343,15 @@ var auvsi = {
 	},
 
 	/**
-	 * Generic get request to auvsi server
+	 * Generic delete / get request to auvsi server
 	 */
-	get: function(path, callback) {
+	send: function(path, method, callback) {
 
 		callback = callback || function() {};
 
 		var request = http.request({
 
-			method: 'GET',
+			method: method || 'GET',
 			path: path,
 			host: config.get_config('auvsi').host,
 			port: config.get_config('auvsi').port,
@@ -362,14 +362,12 @@ var auvsi = {
 		});
 
 		request.on('response', function(response) {
-
 			auvsi.get_response(response, function(res_data) {
 				callback.call(auvsi, null, res_data);
 			});
-
 		});
 		request.on('error', function(err) {
-			utils.log('ERR AUVSI OBSTACLES ' + error.toString());
+			utils.log('ERR AUVSI ' + error.toString());
 			callback.call(auvsi, err);
 		});
 

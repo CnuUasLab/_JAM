@@ -73,7 +73,7 @@ var server = {
 		console.log('RELAY SERVER FUNC(receive_api_target_request) Relaying api target request');
 		server.receive_api_request(request, response);
 
-		if(request.method == 'POST') {
+		if(request.method == 'POST' || request.method == 'PUT') {
 			return server.handle_post_request(request, function(err, data) {
 
 				if(err) {
@@ -82,7 +82,7 @@ var server = {
 					return response.end(err);
 				}
 
-				auvsi.post(request.url, data, function(res_err, res_data) {
+				auvsi.post(request.url, request.method, data, function(res_err, res_data) {
 
 					if(res_err) {
 						console.log('ERR RELAY SERVER FUNC(receive_api_target_request) ' + res_err);
@@ -90,34 +90,26 @@ var server = {
 						return response.end(res_err);
 					}
 
-					console.log('RELAY SERVER FUNC(receive_api_target_request) Successfully relayed api target request');
+					console.log('RELAY SERVER FUNC(receive_api_target_request) Successfully relayed api target ' + request.method + ' request');
 					response.end(res_data);
 
 				});
 			});
 		}
 
-		if(request.method == 'GET') {
-			auvsi.get(request.url, function(err, data) {
+		if(request.method == 'GET' || request.method == 'DELETE') {
+			auvsi.send(request.url, request.method, function(err, data) {
 
 				if(err) {
-					console.log('ERR RELAY SERVER FUNC(handle_post_request) ' + err);
+					console.log('ERR RELAY SERVER FUNC(handle_get_request) ' + err);
 					response.writeHead(500);
 					return response.end(err);
 				}
 
-				console.log('RELAY SERVER FUNC(receive_api_target_request) Successfully relayed api target request');
+				console.log('RELAY SERVER FUNC(receive_api_target_request) Successfully relayed api target ' + request.method + ' request');
 				response.end(data);
 
 			});
-		}
-
-		if(request.method == 'PUT') {
-			
-		}
-
-		if(request.method == 'DELETE') {
-			
 		}
 
 	},

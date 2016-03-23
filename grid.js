@@ -33,14 +33,15 @@ var grid = {
 		y: 0,
 		theta: 0
 
-	}
+	},
 
-};
+	// prev and next waypoints at time of request
+	waypoints: {
 
-/**
- * Public methods for setting and obtaining grid object values
- */
-var grid_methods = {
+		prev_wp: {},
+		next_wp: {}
+
+	},
 
 	set_moving_obstacles: function(obstacles) {
 		grid.obstacles.moving_obstacles = obstacles;
@@ -77,6 +78,7 @@ var grid_methods = {
 		}
 
 		grid.grid_height = height;
+		return height;
 
 	},
 
@@ -87,6 +89,7 @@ var grid_methods = {
 		}
 
 		grid.grid_width = width;
+		return width;
 
 	},
 
@@ -109,6 +112,7 @@ var grid_methods = {
 		}
 
 		grid.location = waypoint;
+		return waypoint;
 	},
 
 	/**
@@ -174,6 +178,7 @@ var grid_methods = {
 		}
 
 		grid.goal = waypoint;
+		return waypoint;
 	},
 
 	/**
@@ -204,6 +209,14 @@ var grid_methods = {
 		grid.goal.x = value;
 		return value;
 
+	},
+
+	set_prev_waypoint: function(waypoint) {
+		grid.waypoints.prev_wp = waypoint;
+	},
+
+	set_next_waypoint: function(waypoint) {
+		grid.waypoints.next_wp = waypoint;
 	},
 
 	/**
@@ -269,4 +282,4 @@ var grid_methods = {
 
 }
 
-module.exports = grid_methods;
+module.exports = grid;
