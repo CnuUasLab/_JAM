@@ -3,14 +3,14 @@
  */
 
 var libmath = require('./libmath.js');
-var grid 	= require('./grid.js');
-var config 	= require('./config.js');
+var grid    = require('./grid.js');
+var config  = require('./config.js');
 
 var api = {
 
 	/* Get current grid information for DROPS.
 	 *
-	 * @param waypoints 	Object 	structure of waypoint data
+	 * @param waypoints		Object	structure of waypoint data
 	 * @return JSON: data that provides X and Y parameters for the Search area.
 	 */
 	get_grid_details: function(telemetry, waypoints) {
@@ -102,13 +102,13 @@ var api = {
 		// calculate distance from last waypoint to current
 		// waypoint padding also added to grid begin / end
 		if(prevWaypoint && currentWaypoint) {
-			
+
 			grid.set_height(
-				grid.set_goal_lon(libmath.get_distance(prevWaypoint, currentWaypoint) 
+				grid.set_goal_lon(libmath.get_distance(prevWaypoint, currentWaypoint)
 					+ (config.get_config('grid').grid_padding_height)
 				)
 			);
-			
+
 			grid.get_grid().grid_height += (config.get_config('grid').grid_padding_height);
 
 			grid.set_goal_lat(config.get_config('grid').grid_width / 2);
@@ -133,7 +133,7 @@ var api = {
 		var location = libmath.get_distance_from_path(telemetry.get_coords(), prevWaypoint, currentWaypoint);
 		var theta = telemetry.get_heading() - libmath.get_bearing(prevWaypoint, currentWaypoint);
 
-		if(theta < 360) {
+		if(theta < 0) {
 			theta += 360;
 		}
 
@@ -148,7 +148,7 @@ var api = {
 	 * @put /api/grid
 	 * Get the current search grid information from the Interop server.
 	 *
-	 * @param followingWaypoint 	Object 	the waypoint after the nextWaypoint
+	 * @param followingWaypoint		Object	the waypoint after the nextWaypoint
 	 * @return JSON: data that provides X and Y parameters for the Search area.
 	 */
 	put_path: function() {
