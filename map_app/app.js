@@ -22,6 +22,10 @@ count = 0;
 //Zoom into the map that we use for viewing.
 var zoom = 17;
 
+//Do we keep zoom constant throughout the flight?
+var zoomunlock = 18;
+var zoomlocked = false;
+
 //Create global vector layers for the obstacles and the plane.
 var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
         isBaseLayer: true,
@@ -113,7 +117,11 @@ function changePlaneLoc(lon, lat, hdg) {
     if(!hasMoved) {
 	count = count + 1;
 	if (count % 20 == 0) {
-	    map.setCenter(lonLat);
+	    if (!zoomlocked) {
+		map.setCenter(lonLat, zoomunlock);
+	    } else {
+		map.setCenter(lonLat);
+	    }
 	} else {
 	    map.panTo(lonLat);
 	}
@@ -206,7 +214,7 @@ function createMovingObsticle(lon, lat, size, id) {
                map.getProjectionObject()),
 		   {description: 'Is an Obstacle'},
 		   {externalGraphic:'map_app/img/sphere_obst.png', 
-		    graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25});
+		    graphicHeight: (size*2), graphicWidth: (size*2), graphicXOffset:-12, graphicYOffset:-25});
     
     // JSON object we use to store obsticle information.
     var ObjectToInsert = {
@@ -241,7 +249,7 @@ function changeMovingObsticleLoc(lon, lat, size, id) {
                        map.getProjectionObject()),
 		       {description: id} ,
 		       {externalGraphic:'map_app/img/sphere_obst.png', 
-                       graphicHeight: (size), graphicWidth: (size), graphicXOffset:-12, graphicYOffset:-25 });
+                       graphicHeight: (size*2), graphicWidth: (size*2), graphicXOffset:-12, graphicYOffset:-25 });
 
 	    movingObstacles.Obsticle = curr;
 	    Obst_Layer.addFeatures(curr);
