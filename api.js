@@ -56,6 +56,41 @@ var api = {
 					"x": 50,
 					"y": 5,
 					"theta": 350
+				},
+				"waypoints": {
+					"prev_wp": {
+						param1: 0,
+						param2: 0,
+						param3: 0,
+						param4: 0,
+						x: -35.36613082885742,
+						y: 149.16458129882812,
+						z: 100,
+						seq: 4,
+						command: 16,
+						target_system: 250,
+						target_component: 1,
+						frame: 3,
+						current: 0,
+						autocontinue: 1
+					},
+					"next_wp": { 
+						param1: 0,
+						param2: 0,
+						param3: 0,
+						param4: 0,
+						x: -35.35927200317383,
+						y: 149.16375732421875,
+						z: 100,
+						seq: 5,
+						command: 16,
+						target_system: 250,
+						target_component: 1,
+						frame: 3,
+						current: 0,
+						autocontinue: 1 
+	 				},
+
 				}
 			};
 
@@ -77,6 +112,7 @@ var api = {
 			grid.get_grid().grid_height += (config.get_config('grid').grid_padding_height);
 
 			grid.set_goal_lat(config.get_config('grid').grid_width / 2);
+			grid.set_prev_waypoint(prevWaypoint);
 
 		}
 
@@ -89,6 +125,8 @@ var api = {
 			console.log('INFO API Theta bearing theta_wptCurr_wptNext', theta_wptCurr_wptNext, '(curr, next) -> (', currentWaypoint, nextWaypoint, ')');
 
 			grid.set_goal_theta(theta_wptCurr_wptNext - theta_wptLast_wptCurr);
+			grid.set_next_waypoint(nextWaypoint);
+
 		}
 
 		// calculate plane location

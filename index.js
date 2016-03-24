@@ -33,7 +33,7 @@ var config 						= require('./config.js');
  */
 function init_listeners() {
 
-	utils.log('_JAM V1.0');
+	utils.log('_JAM V1.0.\nAwaiting telemetry...');
 
 	var telemetryCount = 0;
 	var lastTelemetryFreq = 0;
