@@ -14,6 +14,9 @@ var settings = {
 	"application": {
 		"in_production": false
 	},
+
+	// ip of server hosting auvsi
+	// obstacle and competition data
 	"auvsi": {
 		"host": "137.155.2.166",
 		"port": 80,
@@ -21,6 +24,7 @@ var settings = {
 		"password": "devel"
 	},
 
+	// telemetry and gcs connection settings
 	"mavlink": {
 		"incoming_host": "0.0.0.0",
 		"incoming_port": 14551,
@@ -28,11 +32,13 @@ var settings = {
 		"outgoing_port": 14552
 	},
 
+	// used for sda
 	"grid": {
 		"grid_width": 100,
 		"grid_padding_height": 10
 	},
 
+	// the web-client is served here
 	"http": {
 		"host": "0.0.0.0",
 		"port": 8000
