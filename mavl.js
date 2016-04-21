@@ -70,7 +70,7 @@ var mavl = {
 	 */
 	is_received_message: function(arg) {
 
-		if(arg) {
+		if(arg !== null && arg !== undefined) {
 			var previous_state = mavl._has_received_message;
 			mavl._has_received_message = arg;
 			return previous_state;
@@ -88,7 +88,7 @@ var mavl = {
 	 */
 	is_incoming_ready: function(arg) {
 
-		if(arg) {
+		if(arg !== null && arg !== undefined) {
 			var previous_state = mavl._is_incoming_ready;
 			mavl._is_incoming_ready = arg;
 			return previous_state;
@@ -106,7 +106,7 @@ var mavl = {
 	 */
 	is_outgoing_ready: function(arg) {
 
-		if(arg) {
+		if(arg !== null && arg !== undefined) {
 			var previous_state = mavl._is_outgoing_ready;
 			mavl._is_outgoing_ready = arg;
 			return previous_state;

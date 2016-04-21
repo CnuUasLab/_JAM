@@ -270,7 +270,7 @@ var grid = {
 			grid.is_changed = true;
 		}
 
-		if(arg) {
+		if(arg !== null && arg !== undefined) {
 			var previous_state = grid.is_changed;
 			grid.is_changed = arg;
 			return previous_state;

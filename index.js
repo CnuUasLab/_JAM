@@ -107,6 +107,7 @@ function init_listeners() {
 	mission.on('waypoints', function(data) {
 		console.log('_JAM WAYPOINTS received');
 		waypoints.set_waypoints(data);
+		libsock.io_broadcast('waypoint_data', data);
 	});
 
 	// handle mission errors
@@ -127,11 +128,13 @@ function init_listeners() {
 		// waypoints for api. Setting the current waypt
 		// sets the next, previous, and following waypoints
 		if(waypoints.get_waypoint(fields.seq)) {
+			libsock.io_broadcast('waypoint_data', waypoints.get_waypoints());
 			return waypoints.set_current_waypoint(mavlink, fields.seq);
 		}
 
 		// assume no waypoints have been requested / loaded
-		if(!mission.is_received_waypoint_count()) {
+		if(!mission.is_received_waypoint_count() && !mission.is_queued_waypoint_count()) {
+			console.log('Requesting waypoints...');
 			mission.request_waypoints(libsock, mavlink);
 		}
 
@@ -141,6 +144,7 @@ function init_listeners() {
 	 * Handle waypoint data from GCS
 	 */
 	mavlink.incoming.on('MISSION_ITEM', function(message, fields) {
+		console.log('mission item received');
 		mission.receive_waypoint(libsock, mavlink, fields, mission.waypoints_count_limit);
 	});
 

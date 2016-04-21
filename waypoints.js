@@ -178,7 +178,7 @@ var waypoints = {
 
 	is_changed: function(arg) {
 
-		if(arg) {
+		if(arg !== null && arg !== undefined) {
 			var previous_state = waypoints._is_changed;
 			waypoints._is_changed = arg;
 			return previous_state;
