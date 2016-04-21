@@ -9,6 +9,7 @@ var mission = {
 
 	waypoints_request_timeout: null,
 	waypoints_received_count: false,
+	waypoints_queued_count: false,
 	waypoints_request_isFinished: false,
 	waypoints_count: 0,
 	waypoints_count_limit: 0,
@@ -31,13 +32,25 @@ var mission = {
 	*/
 	is_received_waypoint_count: function(arg) {
 
-		if(arg) {
+		if(arg !== null && arg !== undefined) {
 			var prev_state = mission.waypoints_received_count;
 			mission.waypoints_received_count = arg;
 			return prev_state;
 		}
 
 		return mission.waypoints_received_count;
+
+	},
+
+	is_queued_waypoint_count: function(arg) {
+
+		if(arg !== null && arg !== undefined) {
+			var prev_state = mission.waypoints_queued_count;
+			mission.waypoints_queued_count = arg;
+			return prev_state;
+		}
+
+		return mission.waypoints_queued_count;
 
 	},
 
@@ -75,6 +88,8 @@ var mission = {
 		if(!mission.is_received_waypoint_count(true)) {
 			clearTimeout(mission.waypoints_request_timeout);
 		}
+
+		mission.is_queued_waypoint_count(false);
 
 		mission.waypoints_count = 0;
 		mission.request_waypoint(libsock, mavlink, 0, limit);
@@ -126,6 +141,7 @@ var mission = {
 	 */
 	request_waypoints: function(libsock, mavlink) {
 
+		mission.is_queued_waypoint_count(true);
 		clearTimeout(mission.waypoints_request_timeout);
 
 		var host = config.get_config('mavlink').outgoing_host;
@@ -169,6 +185,7 @@ var mission = {
 		// reset mission retrieval flags and temp array
 		clearTimeout(mission.waypoints_request_timeout);
 		mission.is_received_waypoint_count(false);
+		mission.is_queued_waypoint_count(false);
 
 		mission.waypoints_count = 0;
 		mission.waypoints_count_limit = 0;
