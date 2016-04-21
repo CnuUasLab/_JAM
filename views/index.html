@@ -8,12 +8,13 @@
 
 body {
 	background: rgb(4,13,20);
-	color: rgb(169,225,250);
+	color: rgb(49,183,243);
 	font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', 'Arial';
 }
 
 .overlay {
-	background: rgba(0,0,0,0.0);
+	background: rgba(0,0,0,0);
+	pointer-events: none;
 	display: block;
 	height: 100%;
 	left: 0;
@@ -40,22 +41,24 @@ body {
 
 #wrapper {
 
-        background: black;
+    background: rgba(0,0,0,0);
+    pointer-events: none;
 	/*font-family: 'EB Garamond';*/
 	font-size: 3em;
 	min-height: 10%;
-	margin: 8% auto 0 auto;
-        position: fixed;
-        right: 28%;
-        bottom: 0%;
+	/*margin: 8% auto 0 auto;*/
+    position: fixed;
+    /*right: 28%;*/
+    left: 0;
+    bottom: 0%;
 	text-align: center;
-	min-width: 20%;
-
-        border: 3px #e4e4e4 solid;
-        border-color: white;
-        padding: 20px;
-        border-radius: 90px;
-        box-shadow: 0 0 24px aqua;
+	/*min-width: 20%;*/
+	width: 100%;
+	/*border: 3px #e4e4e4 solid;*/
+	/*border-color: white;*/
+	padding: 20px;
+	/*border-radius: 90px;*/
+	/*box-shadow: 0 0 24px aqua;*/
 
 }
 	#server-wrapper {
@@ -69,12 +72,17 @@ body {
 
 		#server-message {
 
-			color: rgba(255,255,255,0.9);
+			/*color: rgba(255,255,255,0.9);*/
+			color: rgb(103,110,113);
 			display: block;
 			font-size: 0.8em;
 			font-weight: 300;
 			text-align: center; <!-- static -->
 
+		}
+
+		.olButton {
+			display: none;
 		}
 
 		#server-message-timestamp {
@@ -85,13 +93,14 @@ body {
 		}
 
 		#waypoint-wrapper {
-			top: 2;
-                        background-color: black;
-                        border-style: solid;
-                        border-color:#484848 #303030;
-                        min-width = 30%;
-                        margin-top: 100%
-			bottom: 0.2 
+			top: 0;
+                        background-color: rgba(255,255,255,0);
+                        pointer-events: none;
+                        /*border-style: solid;*/
+                        /*border-color:#484848 #303030;*/
+                        min-width: 30%;
+                        /*margin-top: 100%*/
+			/*bottom: 0.2 */
 			display: block;
 			font-size: 2em;
 			left: 0;
@@ -104,7 +113,7 @@ body {
 				font-weight: 300;
 				list-style: none;
 				margin: 30px 10px 20px 10px;
-				padding: 0;
+				padding: 0 0 10px 0;
 			}
 				#waypoint-wrapper ul.left {
 					float: left;
@@ -117,7 +126,8 @@ body {
 				}
 
 				#waypoint-wrapper ul li span.bright {
-					color: rgba(255,255,255,0.9);
+					/*color: rgba(255,255,255,0.9);*/
+					color: rgb(103,110,113)
 				}
 
 
@@ -231,10 +241,14 @@ body {
 	});
 
 	socket.on('obstacle_data', function(data) {
-        // console.log(data.moving_obstacles[0].longitude, 'x', data.moving_obstacles[0].latitude, 'vs', lon.innerHTML, 'x', lat.innerHTML);
-        //console.log(data);
 		arrMovObst(data);
-	});	
+	});
+
+	// receive waypoint data from server
+	// broadcasted at every waypoint
+	socket.on('waypoint_data', function(data) {
+		console.log(data);
+	});
 
 </script>
 <script>
