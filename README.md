@@ -1,27 +1,42 @@
-Interoperability server
-=======================
+# Interoperability server
 
-Listens for connections @ http://localhost:8080 by default.
+##What?
+Interoperability server, relays ground station telemetry to a specified host:port.
+Relays mission target requests to ground station.
+Displays mission obstacles, waypoints, and plane location on web-client.
+Hosts web-client on [http://localhost:8000](http://localhost:8000).
 
 Inorder to run the Interoperability server you must install node package manager dependencies.
 Run: <b>`npm install`</b>
 
 To run the Interoperability Server run: <b>`node interop.js`</b>
 
-# SITL Config
+## Config
 
-Add `--out=udpin:0.0.0.0:<port>` to send MISSION_ITEMS
+Dependency downlaod and config:
 
-# Map Configuration
+```
+npm install
+git submodule update --init
+```
 
-OpenLayers 2 Configuration
---------------------------
-The map runs on an openlayers submodule in `views/index.html`
-To start redirect to the root direcotry of the repository and run `git submodule init`
-You should see something about git@openlayers/ol2.git show.
-Then run `git submodule update` the tools should clone into the ol2 directory in the root of the repository.
+### Ground Station Configuration
 
-Tile Configuration & Download
------------------------------
-Since we have to access tiles locally on the flight field the map application will be using tiles that we download into the tiles folder on the internet.
-To download the tiles run the tile download script in the root of the repository. `./tile_download.sh`
+- Run SITL or GCS with flag `--out=udpin:0.0.0.0:14552`
+- Run SITL or GCS with flag `--out=<ip_of_machine_running_this_server>:14551`
+
+#### Alternatively, if already running GCS software:
+
+- Run on MAVProxy `output add udpin:0.0.0.0:14552`
+- Run on MAVProxy `output add <ip_of_machine_running_this_server>:14551`
+
+Note that ports used above with `:number` are default values set in `config.js`.
+
+### Map Configuration
+
+```
+cd map_app
+./tile_download.sh
+```
+
+The map runs on an openlayers submodule in `/views/index.html`
