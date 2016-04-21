@@ -8,6 +8,7 @@ var utils = require('./utils.js');
 var mission = {
 
 	waypoints_request_timeout: null,
+	waypoints_queue_count_timeout: null,
 	waypoints_received_count: false,
 	waypoints_queued_count: false,
 	waypoints_request_isFinished: false,
@@ -89,7 +90,9 @@ var mission = {
 			clearTimeout(mission.waypoints_request_timeout);
 		}
 
-		mission.is_queued_waypoint_count(false);
+		if(!mission.is_queued_waypoint_count(true)) {
+			clearTimeout(waypoints_queue_count_timeout);
+		}
 
 		mission.waypoints_count = 0;
 		mission.request_waypoint(libsock, mavlink, 0, limit);
@@ -142,7 +145,13 @@ var mission = {
 	request_waypoints: function(libsock, mavlink) {
 
 		mission.is_queued_waypoint_count(true);
+
+		clearTimeout(mission.waypoints_queue_count_timeout);
 		clearTimeout(mission.waypoints_request_timeout);
+
+		mission.waypoints_queue_count_timeout = setTimeout(function() {
+			mission.is_queued_waypoint_count(false);			
+		}, 10000);
 
 		var host = config.get_config('mavlink').outgoing_host;
 		var port = config.get_config('mavlink').outgoing_port;
