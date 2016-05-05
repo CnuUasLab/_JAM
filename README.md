@@ -44,3 +44,6 @@ The map runs on an openlayers submodule in `/views/index.html`. The `tile_downlo
 
 The web-client can be accessed at:
 - [http://localhost:8000](http://localhost:8000)
+- 
+
+![alt tag](https://i.imgur.com/u02tEdv.jpg)
