@@ -91,7 +91,7 @@ var mission = {
 		}
 
 		if(!mission.is_queued_waypoint_count(true)) {
-			clearTimeout(waypoints_queue_count_timeout);
+			clearTimeout(mission.waypoints_queue_count_timeout);
 		}
 
 		mission.waypoints_count = 0;
