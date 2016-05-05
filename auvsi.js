@@ -206,7 +206,6 @@ var auvsi = {
 	 */
 	post_telemetry: function(telemetry, mavlink) {
 		
-		// holds our loop object
 		var query = 'latitude=' + telemetry.get_lat() + '&longitude=' + telemetry.get_lon() + '&altitude_msl=' + telemetry.get_alt_msl() + '&uas_heading=' + telemetry.get_heading();
 			
 		if(mavlink.is_received_message()) {
@@ -232,7 +231,7 @@ var auvsi = {
 				auvsi.get_response(response, function(data) {
 
 					if(data != 'UAS Telemetry Successfully Posted.') {
-						return utils.log('ERR AUVSI TELEMETRY ' + data);
+						return utils.log('ERR POST AUVSI TELEMETRY ' + data);
 					}
 
 					mavlink.set_previous_time_boot(mavlink.get_time_boot());
@@ -242,7 +241,7 @@ var auvsi = {
 			});
 
 			request.on('error', function(error) {
-				utils.log('ERR AUVSI TELEMETRY ' + error.toString());
+				utils.log('ERR POST AUVSI TELEMETRY ' + error.toString());
 			});
 
 			request.end(query);

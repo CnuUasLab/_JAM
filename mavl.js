@@ -32,6 +32,7 @@ var mavl = {
 	 * @param timeboot 	Integer	message timestamp
 	 */
 	set_time_boot: function(timeboot) {
+		mavl.previous_time_boot = mavl.time_boot;
 		mavl.time_boot = timeboot;
 	},
 

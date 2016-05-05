@@ -157,16 +157,6 @@ function init_listeners() {
 	 */
 	mavlink.incoming.on('GLOBAL_POSITION_INT', function(message, fields) {
 
-		telemetryCountUpdated = false;
-		telemetryCount++;
-
-		if((Date.now() / 1000) >= futureTime) {
-			futureTime = (Date.now() / 1000) + 1;
-			lastTelemetryFreq = telemetryCount;
-			telemetryCountUpdated = true;
-			telemetryCount = 0;
-		}
-
 		// update telemetry
 		mavlink.set_time_boot(fields['time_boot_ms']);
 
@@ -205,6 +195,22 @@ function init_listeners() {
 		}
 
 		// post telemetry to auvsi
+		if(mavlink.get_time_boot() == mavlink.get_previous_time_boot) {
+			utils.log('WARN MAVLINK Duplicate data received, discarding...');
+			return;
+		}
+
+		// calculate message frequency
+		telemetryCountUpdated = false;
+		telemetryCount++;
+
+		if((Date.now() / 1000) >= futureTime) {
+			futureTime = (Date.now() / 1000) + 1;
+			lastTelemetryFreq = telemetryCount;
+			telemetryCountUpdated = true;
+			telemetryCount = 0;
+		}
+
 		auvsi.post_telemetry(telemetry, mavlink);
 
 		// send mavlink event to all socket.io clients
