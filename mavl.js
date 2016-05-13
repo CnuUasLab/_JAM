@@ -190,16 +190,23 @@ var mavl = {
 
 	get_mav_const: function(enum_name, const_name) {
 
-		if(!mavl.consts[const_name]) {
-			mavl.consts[const_name] = mavl.incoming.enums.filter(function(item) {
-				return item.$.name == enum_name;
-			})[0].entry.filter(function(item) {
-				return item.$.name == const_name;
-			})[0].$.value;
+		try {
+
+			if(!mavl.consts[const_name]) {
+				mavl.consts[const_name] = mavl.incoming.enums.filter(function(item) {
+					return item ? item.$.name == enum_name : false;
+				})[0].entry.filter(function(item) {
+					return item ? item.$.name == const_name : false;
+				})[0].$.value;
+				return mavl.consts[const_name];
+			}
+
 			return mavl.consts[const_name];
+
+		} catch (e) {
+			console.log('Exception @ mavl.js', e);
 		}
 
-		return mavl.consts[const_name];
 
 	},
 
