@@ -188,25 +188,36 @@ var mavl = {
 
 	},
 
+	/**
+	 * Returns constant integer associated with mavlink command name.
+	 * 95 for MAV_CMD_NAV_LAST, and 177 for MAV_CMD_DO_JUMP
+	 */
 	get_mav_const: function(enum_name, const_name) {
 
 		try {
 
 			if(!mavl.consts[const_name]) {
 				mavl.consts[const_name] = mavl.incoming.enums.filter(function(item) {
-					return item ? item.$.name == enum_name : false;
+					return item.$.name == enum_name;
 				})[0].entry.filter(function(item) {
-					return item ? item.$.name == const_name : false;
+					return item.$.name == const_name;
 				})[0].$.value;
 				return mavl.consts[const_name];
 			}
 
 			return mavl.consts[const_name];
 
-		} catch (e) {
-			console.log('Exception @ mavl.js', e);
-		}
+		} catch(e) {
+			console.log('EXCEPTION MAV_CONST_NAME', const_name,
+				'is not defined in the mavlink incoming library. \
+				Returning hardcoded value.');
 
+			if(const_name == 'MAV_CMD_DO_JUMP') {
+				return 177;
+			}
+
+			return 95;
+		}
 
 	},
 

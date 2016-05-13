@@ -230,13 +230,19 @@ function init_listeners() {
  */
 (function init() {
 
-	// set user module configuration
-	mavlink.init(function() {
-		libsock.init(function() {
-			auvsi.init();
-			server.init();
-			init_listeners();
+	try {
+
+		// set user module configuration
+		mavlink.init(function() {
+			libsock.init(function() {
+				auvsi.init();
+				server.init();
+				init_listeners();
+			});
 		});
-	});
+
+	} catch(e) {
+		console.log('Seems like something has gone wrong:', e);
+	}
 
 })();

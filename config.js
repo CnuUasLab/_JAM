@@ -18,7 +18,7 @@ var settings = {
 	// ip of server hosting auvsi
 	// obstacle and competition data
 	"auvsi": {
-		"host": "192.168.4.3",
+		"host": "137.155.2.166",
 		"port": 80,
 		"username": "uas",
 		"password": "devel"
@@ -28,7 +28,7 @@ var settings = {
 	"mavlink": {
 		"incoming_host": "0.0.0.0",
 		"incoming_port": 14551,
-		"outgoing_host": "192.168.4.3", // 137.155.2.166
+		"outgoing_host": "137.155.2.166", // 137.155.2.166
 		"outgoing_port": 14552
 	},
 
