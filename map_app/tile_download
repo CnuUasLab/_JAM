@@ -35,8 +35,8 @@ curl "http://b.tile.openstreetmap.org/18/753[50-85]/1019[55-90].png" -o "tiles/1
 
 # Suffolk Flying Field
 
-curl "http://c.tile.openstreetmap.org/16/188[05-20]/255[75-90].png" -o "tiles/16/188#1/255#2" --create-dirs
+curl "http://c.tile.openstreetmap.org/16/188[05-20]/255[75-90].png" -o "tiles/16/188#1/255#2.png" --create-dirs
 
 curl "http://b.tile.openstreetmap.org/17/376[05-35]/511[55-90].png" -o "tiles/17/376#1/511#2.png" --create-dirs
 
-curl "http://c.tile.openstreetmap.org/18/752[30-60]/1023[30-60].png" -o "tiles/18/752#1/1023#2" --create-dirs
+curl "http://c.tile.openstreetmap.org/18/752[30-60]/1023[30-60].png" -o "tiles/18/752#1/1023#2.png" --create-dirs
