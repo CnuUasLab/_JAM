@@ -196,6 +196,8 @@ var mavl = {
 
 		try {
 
+			console.log('INFO MAV_CONST_NAME', const_name);
+
 			if(!mavl.consts[const_name]) {
 				mavl.consts[const_name] = mavl.incoming.enums.filter(function(item) {
 					return item.$.name == enum_name;
@@ -208,7 +210,7 @@ var mavl = {
 			return mavl.consts[const_name];
 
 		} catch(e) {
-			console.log('EXCEPTION MAV_CONST_NAME', const_name,
+			console.log('EXCEPTION MAV_CONST_NAME', '"' + const_name + '"',
 				'is not defined in the mavlink incoming library. \
 				Returning hardcoded value.');
 
