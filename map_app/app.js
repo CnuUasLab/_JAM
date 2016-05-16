@@ -23,8 +23,8 @@ count = 0;
 var zoom = 17;
 
 //Do we keep zoom constant throughout the flight?
-var zoomunlock = 18;
-var zoomlocked = false;
+// var zoomunlock = 18;
+var zoomlocked = true;
 
 //Create global vector layers for the obstacles and the plane.
 var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
