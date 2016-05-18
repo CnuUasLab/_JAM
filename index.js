@@ -195,7 +195,7 @@ function init_listeners() {
 		}
 
 		// post telemetry to auvsi
-		if(mavlink.get_time_boot() == mavlink.get_previous_time_boot) {
+		if(mavlink.get_time_boot() == mavlink.get_previous_time_boot()) {
 			utils.log('WARN MAVLINK Duplicate data received, discarding...');
 			return;
 		}
