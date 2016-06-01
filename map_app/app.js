@@ -70,6 +70,10 @@ var StationaryObstBeenCalled = false;
     
 //Holds moving obstacles in array in JSON format.
 var movingObstacles = [];
+
+//Holds the Waypoints currently on the field
+var waypoints = [];
+
 //Has the plane obsticle moved?
 var hasMoved = false;
 
@@ -199,6 +203,35 @@ function createStationaryObsticle(lon, lat, height, rad) {
 }
 
 /**
+ * Adds a waypoint icon to the map and lists the icon in a queue
+ *
+ * @param lon - longitude data of the waypoint
+ * @param lat - latitude data of the waypoint
+ * @param seq - the numerical sequence that the waypoint is in the flight.
+ */
+function createWaypoint(lon, lat, seq) {
+
+    for(var i = 0; i < waypoints.length; i++) {
+	if(lon == waypoints[i].longitude && lat == waypoints[i].latitude){
+		console.log("Waypoint already reached.");
+		return;
+	}
+    }
+    
+    wayp = new OpenLayers.Feature.Vector(
+	      new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"),
+              map.getProjectionObject()),
+	            {description:'waypoint - ', seq},
+	            {externalGraphic:'map_app/img/waypoint.icons/'+seq+'.png',
+                    graphicHeight: 35, graphicWidth: 35, graphicXOffset:-14.5, graphicYOffset:-14.5});
+
+    waypoints.push(wayp);
+    console.log();
+
+    planeLayer.addFeatures(wayp);
+}
+
+/**
  * Create a moving obstacle marker on the map.
  * 
  * @param lon - Longitude of the obstacle.
@@ -292,4 +325,14 @@ function arrMovObst(Obstaclearr) {
                                 Obstaclearr.moving_obstacles[i].latitude, 
                                 Obstaclearr.moving_obstacles[i].sphere_radius, i);
     }
+}
+
+/**
+ *
+ *
+ */
+function populateWaypoints(data) {
+	for(var num in data) {
+		createWaypoint(data.num.x, data.num.y, num);
+	}
 }
