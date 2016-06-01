@@ -333,6 +333,7 @@ function arrMovObst(Obstaclearr) {
  */
 function populateWaypoints(data) {
 	for(var num in data) {
-		createWaypoint(data.num.x, data.num.y, num);
+		obj = data[num]
+		createWaypoint(obj.x, obj.y, num);
 	}
 }
