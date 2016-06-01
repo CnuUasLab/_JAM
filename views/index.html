@@ -247,7 +247,7 @@ body {
 	// receive waypoint data from server
 	// broadcasted at every waypoint
 	socket.on('waypoint_data', function(data) {
-		console.log(data);
+		populateWaypoints(data.toSource());
 	});
 
 </script>
