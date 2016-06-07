@@ -177,6 +177,8 @@ body {
 
 	var overlay = document.getElementById('overlay');
 
+	var waypointsCalled = false;
+	
 	var lat = document.getElementById('lat');
 	var lon = document.getElementById('lon');
 	var hdg = document.getElementById('hdg');
@@ -247,7 +249,10 @@ body {
 	// receive waypoint data from server
 	// broadcasted at every waypoint
 	socket.on('waypoint_data', function(data) {
-		populateWaypoints(data.toSource());
+	    if(!waypointsCalled) {
+	        populateWaypoints(data.toSource());
+	        waypointsCalled=true;
+	    }
 	});
 
 </script>

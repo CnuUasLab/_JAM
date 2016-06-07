@@ -325,12 +325,13 @@ function arrMovObst(Obstaclearr) {
 }
 
 /**
- *
- *
+ * Function that parses Waypoint JSON Data
+ * @params data -- Waypoint JSON Data
  */
 function populateWaypoints(data) {
 	for(var num in data) {
-		obj = data[num]
-		createWaypoint(obj.x, obj.y, num);
+	    obj = data[num]
+	    console.log(obj.x, " ", obj.y)
+	    //createWaypoint(obj.x, obj.y, num);
 	}
 }
