@@ -30,15 +30,19 @@ var zoomlocked = true;
 var vectorLayer = new OpenLayers.Layer.Vector("Overlay", {
         isBaseLayer: true,
         renderers: ['SVG', 'Canvas', 'VML']
-    });
+});
 
 var Obst_Layer = new OpenLayers.Layer.Vector("Overlay_Obst", {
         renderers: ['SVG', 'Canvas', 'VML']
-    });
+});
  
 var planeLayer = new OpenLayers.Layer.Vector("Plane", {
         renderers: ['SVG', 'Canvas', 'VML']
-    });
+});
+
+var waypointLayer = new OpenLayers.Layer.Vector("Plane", {
+    renderers: ['SVG', 'Canvas', 'VML']
+});
 
 //Make the plane marker for the Open Layers Marker layer.
 var feature = new OpenLayers.Feature.Vector(
@@ -53,6 +57,7 @@ var feature = new OpenLayers.Feature.Vector(
 map.addLayer(vectorLayer);
 map.addLayer(Obst_Layer);
 map.addLayer(planeLayer); 
+map.addLayer(waypointLayer);
 
 // Where to position the map (Initially)
 var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
@@ -70,9 +75,6 @@ var StationaryObstBeenCalled = false;
     
 //Holds moving obstacles in array in JSON format.
 var movingObstacles = [];
-
-//Holds the Waypoints currently on the field
-var waypoints = [];
 
 //Has the plane obsticle moved?
 var hasMoved = false;
@@ -217,10 +219,10 @@ function createWaypoint(lon, lat, seq) {
 	            {description:'waypoint - ', seq},
 	            {externalGraphic:'map_app/img/waypoint.icons/'+seq+'.png',
                     graphicHeight: 35, graphicWidth: 35, graphicXOffset:0, graphicYOffset:0});
-	console.log("balooga balooga the big blue whale");
-    waypoints.push(wayp);
-    planeLayer.addFeatures(wayp);
-	UpdateLayer(planeLayer);
+    console.log("balooga balooga the big blue whale");
+
+    waypointLayer.addFeatures(wayp);
+    UpdateLayer(waypointLayer);
 }
 
 /**
@@ -327,7 +329,6 @@ function populateWaypoints(data) {
 	var param = JSON.parse(data);
 	for(var num in param) {
 	    obj = param[num];
-	    //console.log(obj.x);
 	    createWaypoint(obj.x, obj.y, num);
 	}
 }
