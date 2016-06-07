@@ -250,7 +250,7 @@ body {
 	// broadcasted at every waypoint
 	socket.on('waypoint_data', function(data) {
 	    if(!waypointsCalled) {
-	        populateWaypoints(JSON.stringify(data));
+	        populateWaypoints(data.toSource());
 	        waypointsCalled=true;
 	    }
 	});
