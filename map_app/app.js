@@ -213,7 +213,6 @@ function createWaypoint(lon, lat, seq) {
 
     for(var i = 0; i < waypoints.length; i++) {
 	if(lon == waypoints[i].longitude && lat == waypoints[i].latitude){
-		console.log("Waypoint already reached.");
 		return;
 	}
     }
@@ -223,11 +222,9 @@ function createWaypoint(lon, lat, seq) {
               map.getProjectionObject()),
 	            {description:'waypoint - ', seq},
 	            {externalGraphic:'map_app/img/waypoint.icons/'+seq+'.png',
-                    graphicHeight: 35, graphicWidth: 35, graphicXOffset:-14.5, graphicYOffset:-14.5});
+                    graphicHeight: 35, graphicWidth: 35, graphicXOffset:0, graphicYOffset:0});
 
     waypoints.push(wayp);
-    console.log();
-
     planeLayer.addFeatures(wayp);
 }
 
