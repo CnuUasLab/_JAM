@@ -111,7 +111,7 @@ function changePlaneLoc(lon, lat, hdg) {
 	{description:'X-8 Plane for AUVSI Competition'},
 	            {externalGraphic:'map_app/img/airplane.png',
                     graphicHeight: 35, graphicWidth: 35, graphicXOffset:-14.5, graphicYOffset:-25, rotation: hdg });
-
+    
     UpdateLayer(null, planeLayer, [feature, trackFeature]);
 
     var lonLat = new OpenLayers.LonLat( lon, lat )                     
@@ -213,17 +213,20 @@ function createStationaryObsticle(lon, lat, height, rad) {
  * @param seq - the numerical sequence that the waypoint is in the flight.
  */
 function createWaypoint(lon, lat, seq) {
+
+    console.log(lat + " " + lon)
     
     wayp = new OpenLayers.Feature.Vector(
-	      new OpenLayers.Geometry.Point(lat, lon).transform(new OpenLayers.Projection("EPSG:4326"),
+	      new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"),
               map.getProjectionObject()),
 	            {description:'waypoint for xplane'},
 	            {externalGraphic:'map_app/img/waypoint.icons/'+seq+'.png',
                     graphicHeight: 35, graphicWidth: 35, graphicXOffset:0, graphicYOffset:0});
-    console.log("balooga balooga the big blue whale");
+
+    //console.log("balooga balooga the big blue whale");
 
     waypointLayer.addFeatures(wayp);
-    UpdateLayer(waypointLayer);
+    UpdateLayer(null, waypointLayer, [wayp]);
 }
 
 /**
@@ -330,6 +333,6 @@ function populateWaypoints(data) {
 	var param = JSON.parse(data);
 	for(var num in param) {
 	    obj = param[num];
-	    createWaypoint(obj.x, obj.y, num);
+	    createWaypoint(obj.y, obj.x, num);
 	}
 }
