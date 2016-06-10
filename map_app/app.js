@@ -108,7 +108,7 @@ function changePlaneLoc(lon, lat, hdg) {
     feature = new OpenLayers.Feature.Vector(
 	      new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"),
               map.getProjectionObject()),
-	            {description:'X-8 Plane for AUVSI Competition'},
+	{description:'X-8 Plane for AUVSI Competition'},
 	            {externalGraphic:'map_app/img/airplane.png',
                     graphicHeight: 35, graphicWidth: 35, graphicXOffset:-14.5, graphicYOffset:-25, rotation: hdg });
 
@@ -117,8 +117,9 @@ function changePlaneLoc(lon, lat, hdg) {
     var lonLat = new OpenLayers.LonLat( lon, lat )                     
         .transform(                                                             
 		   new OpenLayers.Projection("EPSG:4326"), // transform from WGS 1984  
-		   map.getProjectionObject() // to Spherical Mercator Projection       
-		   									);
+	    map.getProjectionObject() // to Spherical Mercator Projection
+	);
+
     
     if(!hasMoved) {
 	count = count + 1;
@@ -214,9 +215,9 @@ function createStationaryObsticle(lon, lat, height, rad) {
 function createWaypoint(lon, lat, seq) {
     
     wayp = new OpenLayers.Feature.Vector(
-	      new OpenLayers.Geometry.Point(lon, lat).transform(new OpenLayers.Projection("EPSG:4326"),
+	      new OpenLayers.Geometry.Point(lat, lon).transform(new OpenLayers.Projection("EPSG:4326"),
               map.getProjectionObject()),
-	            {description:'waypoint - ', seq},
+	            {description:'waypoint for xplane'},
 	            {externalGraphic:'map_app/img/waypoint.icons/'+seq+'.png',
                     graphicHeight: 35, graphicWidth: 35, graphicXOffset:0, graphicYOffset:0});
     console.log("balooga balooga the big blue whale");
