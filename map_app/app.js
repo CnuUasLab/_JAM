@@ -221,7 +221,7 @@ function createWaypoint(lon, lat, seq) {
               map.getProjectionObject()),
 	            {description:'waypoint for xplane'},
 	            {externalGraphic:'map_app/img/waypoint.icons/'+seq+'.png',
-                    graphicHeight: 35, graphicWidth: 35, graphicXOffset:0, graphicYOffset:0});
+                    graphicHeight: 25, graphicWidth: 25, graphicXOffset:-16, graphicYOffset:-8});
 
     //console.log("balooga balooga the big blue whale");
 
