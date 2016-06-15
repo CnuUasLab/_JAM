@@ -18,10 +18,10 @@ var settings = {
 	// ip of server hosting auvsi
 	// obstacle and competition data
 	"auvsi": {
-		"host": "127.0.0.1",
-		"port": 80,
-		"username": "uas",
-		"password": "devel"
+		"host": "192.168.1.20",
+		"port": 8000,
+		"username": "admin",
+		"password": "pass"
 	},
 
 	// telemetry and gcs connection settings

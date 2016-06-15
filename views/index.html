@@ -255,6 +255,11 @@ body {
 	    }
 	});
 
+	//recieve mission data for the competition
+	socket.on('mission_data', function(data) {
+		console.log(data);	
+	});
+
 </script>
 <script>
 // remove open layers text

@@ -21,7 +21,8 @@ var auvsi = {
 		api_path_login: '/api/login',
 		api_path_obstacles: '/api/obstacles',
 		api_path_telemetry: '/api/telemetry',
-		api_path_targets: '/api/targets'
+		api_path_targets: '/api/targets',
+		api_path_missions: '/api/missions'
 
 	},
 
@@ -34,6 +35,7 @@ var auvsi = {
 	EVENT_KEY_ON_AUVSI_INFO: 'info',
 	EVENT_KEY_ON_AUVSI_AUTH: 'auth',
 	EVENT_KEY_ON_AUVSI_OBSTACLES: 'obstacles',
+	EVENT_KEY_ON_AUVSI_MISSIONS: 'mission',	
 
 	cookie: null,
 
@@ -251,6 +253,46 @@ var auvsi = {
 		}
 
 	},
+	
+	/**
+	 * Checks for mission data and does an http request
+	 *
+	 * @param cookie - cookie generated from the authorization session
+	 * @emit mission config JSON data.
+	 */
+	get_mission_data: function(cookie) {
+		
+		var request = http.request({
+			method: 'GET',
+			path: auvsi.connection.api_path_missions,
+			host: config.get_config('auvsi').host,
+			port: config.get_config('auvsi').port,
+
+			headers: {
+				'Cookie': cookie
+			}
+		});
+
+		request.on('response', function(response) {
+
+			auvsi.get_response(response, function(data) {
+
+				try {
+					auvsi.emit(auvsi.EVENT_KEY_ON_AUVSI_MISSIONS, [JSON.parse(data)]);
+				} catch(e) {
+					utils.log(e);
+				}
+
+			});
+
+		});
+
+		request.on('error', function(error) {
+			utils.log('ERR AUVSI MISSION CONF ' + error.toString());
+		});
+
+		request.end();
+	},
 
 	/**
 	 * Initialize auvsi module and auvsi api requests.
@@ -277,6 +319,7 @@ var auvsi = {
 
 				auvsi.get_server_info(auvsi.get_cookie());
 				auvsi.get_obstacles(auvsi.get_cookie());
+				auvsi.get_mission_data(auvsi.get_cookie());
 
 				clearTimeout(auvsi.connection.timeout);
 				auvsi.connection.timeout = setTimeout(fn, auvsi.connection.timeout_delay);

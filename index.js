@@ -103,6 +103,10 @@ function init_listeners() {
 		libsock.io_broadcast('obstacle_data', data);
 	});
 
+	auvsi.on('mission', function(data) {
+		libsock.io_broadcast('mission_data', data);
+	});
+
 	// subscribe to mission waypoints received events
 	mission.on('waypoints', function(data) {
 		console.log('_JAM WAYPOINTS received');
