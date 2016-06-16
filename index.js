@@ -208,8 +208,8 @@ function init_listeners() {
 		telemetryCountUpdated = false;
 		telemetryCount++;
 
-		if((Date.now() / 1000) >= futureTime) {
-			futureTime = (Date.now() / 1000) + 1;
+		if(Date.now() >= futureTime) {
+			futureTime = Date.now() + 1000;
 			lastTelemetryFreq = telemetryCount;
 			telemetryCountUpdated = true;
 			telemetryCount = 0;

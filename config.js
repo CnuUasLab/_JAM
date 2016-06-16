@@ -18,10 +18,10 @@ var settings = {
 	// ip of server hosting auvsi
 	// obstacle and competition data
 	"auvsi": {
-		"host": "192.168.1.148",
-		"port": 8080,
-		"username": "testadmin",
-		"password": "testpass",
+		"host": "192.168.1.132",
+		"port": 8000,
+		"username": "admin",
+		"password": "pass",
 		"admin": false
 	},
 
