@@ -1,0 +1,8 @@
+{
+	"flight_boundaries": [{"longitude":0, "latitude":0}, {"longitude":1, "latitude":1}],
+	"SRIC_Position": {
+				"longitude":-76.4266013,
+				"latitude":38.1470837
+			}
+}
+

@@ -16,6 +16,8 @@
  */
 
 
+var preflight = require('../preflightinfo.json');
+
 //Create the Map from the Open Layers Dependency from OSM.
 map = new OpenLayers.Map("mapdiv");
 
@@ -51,6 +53,11 @@ var planeLayer = new OpenLayers.Layer.Vector("Plane", {
 
 var waypointLayer = new OpenLayers.Layer.Vector("Plane", {
     renderers: ['SVG', 'Canvas', 'VML']
+});
+
+//preflight Layer for SRIC and flight boundaries
+var preflightLayer = new OpenLayers.Layer.Vector("SRIC/Boundaries", {
+	renderers: ['SVG', 'Canvas', 'VML']
 });
 
 //Make the plane marker for the Open Layers Marker layer.
@@ -90,6 +97,27 @@ var hasMoved = false;
 
 //hold current waypoint set
 var currentWaypointSet = {};
+
+/**
+ * Create SRIC and position boundary locations
+ *
+ *
+ */
+function initKeyLocations() {
+    sric_lon = preflight.SRIC_Position.longitude;
+    sric_lat = preflight.SRIC_Position.latitude;
+    
+    var sric = new OpenLayers.Feature.Vector(
+			 new OpenLayers.Geometry.Point(sric_lon, sric_lat).transform(
+			     new OpenLayers.Projection("EPSG:4326"),
+			     map.getProjectionObject()),
+			     {description:'SRIC Position on Field'} ,
+			     {externalGraphic: 'map_app/img/star_plane.png',
+			     graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25, graphicZIndex:12 });
+
+    preflightLayer.addFeatures(sric);
+    
+}
 
 /**
  * Change the location of the plane marker leaving tracer.
