@@ -18,17 +18,17 @@ var settings = {
 	// ip of server hosting auvsi
 	// obstacle and competition data
 	"auvsi": {
-		"host": "192.168.1.20",
-		"port": 8000,
-		"username": "admin",
-		"password": "pass"
+		"host": "10.10.130.10",
+		"port": 80,
+		"username": "CNU",
+		"password": "2106762161"
 	},
 
 	// telemetry and gcs connection settings
 	"mavlink": {
 		"incoming_host": "0.0.0.0",
 		"incoming_port": 14551,
-		"outgoing_host": "127.0.0.1", // 137.155.2.166
+		"outgoing_host": "192.168.1.148", // 137.155.2.166
 		"outgoing_port": 14552
 	},
 

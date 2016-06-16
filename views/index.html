@@ -177,7 +177,7 @@ body {
 
 	var overlay = document.getElementById('overlay');
 
-	var waypointsCalled = false;
+//	var waypointsCalled = false;
 	
 	var lat = document.getElementById('lat');
 	var lon = document.getElementById('lon');
@@ -247,17 +247,13 @@ body {
 	});
 
 	// receive waypoint data from server
-	// broadcasted at every waypoint
 	socket.on('waypoint_data', function(data) {
-	    if(!waypointsCalled) {
-	        populateWaypoints(JSON.stringify(data));
-	        waypointsCalled=true;
-	    }
+	    populateWaypoints(JSON.stringify(data));   
 	});
 
 	//recieve mission data for the competition
 	socket.on('mission_data', function(data) {
-		console.log(data);	
+		console.log(JSON.stringify(data));	
 	});
 
 </script>

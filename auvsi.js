@@ -409,7 +409,7 @@ var auvsi = {
 			});
 		});
 		request.on('error', function(err) {
-			utils.log('ERR AUVSI ' + error.toString());
+			utils.log('ERR AUVSI ' + err.toString());
 			callback.call(auvsi, err);
 		});
 

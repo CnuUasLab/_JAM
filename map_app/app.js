@@ -1,9 +1,18 @@
+
 /**
- * In Development -- Map that helps visualize obsticle location using Open Street Map as a
- * dependency for the application. Obsticle updates, and creations are
- * specified in methods, and functions.
+ ***************************** CNU Imprint *******************************
+ *                                                                       *
+ * Map that helps visualize obsticle location using Open Street Map as a *
+ * dependency for the application. Obsticle updates, and creations are   *
+ * specified in methods, and functions.                                  *
+ *                                                                       *
+ ***************************** CNU Imprint *******************************
  *
- *    **************************** CNU Imprint ******************************
+ *
+ * @version 06/15/2016
+ * @author  davidkroell
+ * @see     ../views/index.html
+ *
  */
 
 
@@ -78,6 +87,9 @@ var movingObstacles = [];
 
 //Has the plane obsticle moved?
 var hasMoved = false;
+
+//hold current waypoint set
+var currentWaypointSet = {};
 
 /**
  * Change the location of the plane marker leaving tracer.
@@ -162,6 +174,7 @@ function UpdateLayer(mapLayer, featureLayer, features) {
     }
 
     if(featureLayer) {
+
         featureLayer.setVisibility(true);
     }
 
@@ -330,9 +343,17 @@ function arrMovObst(Obstaclearr) {
  * @params data -- Waypoint JSON Data
  */
 function populateWaypoints(data) {
+    if (JSON.stringify(data) !== JSON.stringify(currentWaypointSet)) {
+	
+	waypointLayer.removeAllFeatures();
+	
 	var param = JSON.parse(data);
 	for(var num in param) {
 	    obj = param[num];
 	    createWaypoint(obj.y, obj.x, num);
 	}
+
+	currentWaypointSet = data;
+
+    }
 }
