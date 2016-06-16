@@ -18,10 +18,11 @@ var settings = {
 	// ip of server hosting auvsi
 	// obstacle and competition data
 	"auvsi": {
-		"host": "10.10.130.10",
-		"port": 80,
-		"username": "CNU",
-		"password": "2106762161"
+		"host": "192.168.1.148",
+		"port": 8080,
+		"username": "testadmin",
+		"password": "testpass",
+		"admin": false
 	},
 
 	// telemetry and gcs connection settings

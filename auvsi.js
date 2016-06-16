@@ -319,7 +319,10 @@ var auvsi = {
 
 				auvsi.get_server_info(auvsi.get_cookie());
 				auvsi.get_obstacles(auvsi.get_cookie());
-				auvsi.get_mission_data(auvsi.get_cookie());
+				
+				if(config.get_config('auvsi').admin) {
+				    auvsi.get_mission_data(auvsi.get_cookie());
+				}
 
 				clearTimeout(auvsi.connection.timeout);
 				auvsi.connection.timeout = setTimeout(fn, auvsi.connection.timeout_delay);
