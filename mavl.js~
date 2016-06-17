@@ -2,8 +2,7 @@
  * Mavlink utils library 
  */
 
-var Mavlink = require('./mavlJSON.js');
-//var Mavlink = require('mavlink');
+var Mavlink = require('mavlink');
 var config = require('./config.js');
 
 var mavl = {
@@ -134,9 +133,9 @@ var mavl = {
 			callback = function() {};
 		}
 
-		/*		mavl.outgoing.createMessage(message_type, message_body, function(message) {
-			var mess = JSON.stringify(message)
-			libsock.send(mess, 0, mess.length, target_port, target_ip, function(err, bytes) {
+		mavl.outgoing.createMessage(message_type, message_body, function(message) {
+
+			libsock.send(message.buffer, 0, message.buffer.length, target_port, target_ip, function(err, bytes) {
 
 				if(err) {
 					callback.call(this, err);
@@ -147,7 +146,7 @@ var mavl = {
 			});
 			
 		});
-		*/
+
 	},
 
 	/**
@@ -157,10 +156,8 @@ var mavl = {
 	 */
 	init: function(callback) {
 
-	//mavl.incoming = new Mavlink(0, 0);
-	//mavl.outgoing = new Mavlink(250, 1);
-	mavl.incoming = Mavlink;
-	//	mavl.outgoing = new Mavlink();
+		mavl.incoming = new Mavlink(0, 0);
+		mavl.outgoing = new Mavlink(250, 1);
 
 		if(typeof callback != 'function') {
 			callback = function() {};
@@ -169,27 +166,26 @@ var mavl = {
 		mavl.incoming.on('ready', function() {
 			check_mavlink_ready();
 		});
-	/*		mavl.outgoing.on('ready', function() {
-			//	console.log("Reached");
+
+		mavl.outgoing.on('ready', function() {
 			check_mavlink_ready();
-			}); */
-	
+		});
+
 		function check_mavlink_ready() {
-		    // console.log("Reached here");
-		    
+
 			if(!check_mavlink_ready.mavlink_ready_count) {
 				check_mavlink_ready.mavlink_ready_count = 0;
 			}
 
 			check_mavlink_ready.mavlink_ready_count++;
 
-			if(check_mavlink_ready.mavlink_ready_count >= 1) { // was 2
+			if(check_mavlink_ready.mavlink_ready_count >= 2) {
 				callback.call(mavl);
 				mavl.emit(mavl.EVENT_KEY_ON_MAVL_READY, []);
 			}
 
 		}
-	mavl.incoming.init();
+
 	},
 
 	/**
@@ -197,7 +193,7 @@ var mavl = {
 	 * 95 for MAV_CMD_NAV_LAST, and 177 for MAV_CMD_DO_JUMP
 	 */
 	get_mav_const: function(enum_name, const_name) {
-	/*
+
 		try {
 
 			console.log('INFO MAV_CONST_NAME', const_name);
@@ -224,9 +220,7 @@ var mavl = {
 
 			return 95;
 		}
-	*/
-	    return Mavlink.get_mav_cont_helper(enum_name, const_name);
-	
+
 	},
 
 	on: function(evtKey, callback) {

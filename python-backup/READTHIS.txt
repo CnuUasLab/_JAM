@@ -1,0 +1,32 @@
+Generating a mavlink module
+The way pymavlink works is that you use the mavgen.py tool to generate a python interface for a given set of MAVLink protocol messages. Typical usage is like this:
+
+mavgen.py -o mavlinkv10.py mavlink/message_definitions/common.xml
+
+that will read the common.xml MAVLink message definition and create a mavlinkv10.py python interface. The resulting mavlink.py module will contain:
+
+a set of constants for any enums in the XML file
+a set of constants for the message identifiers
+a class for each type of MAVLink message defined in the XML file
+a MAVLink class, which can be used to send and receive messages
+within the MAVLink class, a _send and _decode function for each message type
+The mavlink distribution comes pre-built with a mavlink.py module built from a recent common.xml MAVLink common message definition. If you wish to use messages that are not in common.xml you will need to rebuild your own mavlink.py using a different set of XML files.
+
+API Documentation
+The mavgen generator includes the creation of documentation for all of the MAVLink messages, which is available in the usual python way via pydoc.
+
+You can also view a HTML version of the documentation online:
+
+module overview
+function index
+Examples
+A couple of simple examples are available with the pymavlink package. These examples should help you get started.
+
+encode/decode a message
+dump a qgroundcontrol MAVLink log file
+MAVProxy
+A more complete example is provided by MAVProxy, which is a MAVLink protocol proxy. It demonstrates most of the features of using the mavlink module.
+
+You can get MAVProxy via git at the link below, or find out more here:
+
+git clone git://github.com/tridge/MAVProxy.git
