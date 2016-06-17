@@ -118,8 +118,6 @@ var currentWaypointSet = {};
 
 /**
  * Create SRIC and position boundary locations
- *
- *
  */
 function initKeyLocations() {
     sric_lon = preflight.SRIC_Position.longitude;
@@ -134,20 +132,30 @@ function initKeyLocations() {
 			     graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25, graphicZIndex:12 });
 
     preflightLayer.addFeatures(sric);
-    UpdateLayer(null, preflightLayer, [sric]);    
+    //UpdateLayer(null, preflightLayer, [sric]);    
 
     var boundary_array = preflight.flight_boundaries;
 
-    for(var i = 0; i < boundary_array.length-1; i++) {
-	var start_point = new OpenLayers.Geometry.Point(boundary_array[i].longitude, boundary_array[i].latitude);
-	var end_point = new OpenLayers.Geometry.Point(boundary_array[i+1].longitude, boundary_array[i+1].latitude);
+    var points = [];
+    
+    var vectLayer = new OpenLayers.Layer.Vector("Overlay");
 
-	var vector = new OpenLayers.Layer.Vector();
-	var vec = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString([start_point, end_point]))]
-	vector.addFeatures(vec);
-	map.addLayers([vector]);
-	UpdateLayer(null, vector, vec);
+    epsg4326 =  new OpenLayers.Projection("EPSG:4326"); //WGS 1984 projection
+    projectTo = map.getProjectionObject(); //The map projection (Spherical Mercator)
+
+    for(var i = 0; i < boundary_array.length; i++) {
+	point = new OpenLayers.Geometry.Point( boundary_array[i].latitude, boundary_array[i].longitude).transform(epsg4326, projectTo);
+	points.push(point);
+	//console.log(point);
     }
+
+    points.push(new OpenLayers.Geometry.Point( boundary_array[0].latitude, boundary_array[0].longitude).transform(epsg4326, projectTo));
+    var feature = new OpenLayers.Feature.Vector(
+			new OpenLayers.Geometry.LineString(points)
+		     );
+
+    vectLayer.addFeatures(feature);
+    map.addLayer(vectLayer);
     
 }
 

@@ -28,9 +28,9 @@ var settings = {
 	// telemetry and gcs connection settings
 	"mavlink": {
 		"incoming_host": "0.0.0.0",
-		"incoming_port": 14551,
-		"outgoing_host": "192.168.1.148", // 137.155.2.166
-		"outgoing_port": 14552
+		"incoming_port": 14561,
+		"outgoing_host": "192.168.4.7", // 137.155.2.166
+		"outgoing_port": 14562
 	},
 
 	// used for sda
