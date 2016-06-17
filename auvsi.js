@@ -70,9 +70,9 @@ var auvsi = {
 				// else advertise invalid login data
 				if(data == auvsi.RESPONSE_LOGIN_SUCCESS) {
 					auvsi.cookie = response.headers['set-cookie'][0];
-					callback.call(this);
+//					utils.log(this);
 				} else {
-					callback.call(this, 'Invalid auvsi auth server response: ' + data);
+//					utils.log(this, 'Invalid auvsi auth server response: ' + data);
 				}
 
 			});
