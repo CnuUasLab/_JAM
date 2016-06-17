@@ -11,7 +11,7 @@ var config = require('./config.js');
 var auvsi = {
 
 	connection: {
-		
+
 		timeout_attempts: 0,
 		timeout_auth_reconnect_delay: 3000,
 		timeout_delay: 100,
@@ -35,7 +35,7 @@ var auvsi = {
 	EVENT_KEY_ON_AUVSI_INFO: 'info',
 	EVENT_KEY_ON_AUVSI_AUTH: 'auth',
 	EVENT_KEY_ON_AUVSI_OBSTACLES: 'obstacles',
-	EVENT_KEY_ON_AUVSI_MISSIONS: 'mission',	
+	EVENT_KEY_ON_AUVSI_MISSIONS: 'mission',
 
 	cookie: null,
 
@@ -65,8 +65,8 @@ var auvsi = {
 			auvsi.get_response(response, function(data) {
 
 				// if server returns successful connection
-				// 	set auth cookie as global variable and
-				// 	call interoperability functions
+				//	set auth cookie as global variable and
+				//	call interoperability functions
 				// else advertise invalid login data
 				if(data == auvsi.RESPONSE_LOGIN_SUCCESS) {
 					auvsi.cookie = response.headers['set-cookie'][0];
@@ -93,10 +93,10 @@ var auvsi = {
 				}
 
 				utils.log('WARN AUVSI AUTH Unable to connect to auvsi server. Retrying...');
-				
+
 				clearTimeout(auvsi.connection.timeout);
 				auvsi.connection.timeout = setTimeout(auvsi.auth, auvsi.connection.timeout_auth_reconnect_delay);
-				
+
 			} else {
 				utils.log('ERR AUVSI AUTH ' + error.toString());
 			}
@@ -111,8 +111,8 @@ var auvsi = {
 	 * Retrieves auvsi obstacle list, server time, message, timestamp
 	 * using auvsi server api.
 	 *
-	 * @param cookie 	String 	http cookie obtained after
-	 * 	authenticating with the auvsi server
+	 * @param cookie	String	http cookie obtained after
+	 *	authenticating with the auvsi server
 	 *
 	 * @emits auvsi.EVENT_KEY_ON_AUVSI_INFO
 	 */
@@ -159,8 +159,8 @@ var auvsi = {
 	/**
 	 * Retrieves auvsi obstacle data using auvsi api.
 	 *
-	 * @param cookie 	String 	http cookie obtained after
-	 * 	authenticating with the auvsi server
+	 * @param cookie	String	http cookie obtained after
+	 *	authenticating with the auvsi server
 	 *
 	 * @emits auvsi.EVENT_KEY_ON_AUVSI_OBSTACLES
 	 */
@@ -203,14 +203,17 @@ var auvsi = {
 	/**
 	 * Posts waypoints received from ground station to auvsi server
 	 *
-	 * @param telemetry Object 	containing plane telemetry
-	 * @param mavlink 	Object 	containint mavlink data / status
+	 * @param telemetry Object	containing plane telemetry
+	 * @param mavlink		Object	containint mavlink data / status
 	 */
 	post_telemetry: function(telemetry, mavlink) {
-		
+
 		var query = 'latitude=' + telemetry.get_lat() + '&longitude=' + telemetry.get_lon() + '&altitude_msl=' + telemetry.get_alt_msl() + '&uas_heading=' + telemetry.get_heading();
-			
+
 		if(mavlink.is_received_message()) {
+			if(auvsi.get_cookie == null) {
+				utils.log('ERR POST AUVSI TELEMTRY: No cookie');
+			}
 
 			// establish http connection to the auvsi uas server
 			var request = http.request({
@@ -253,7 +256,7 @@ var auvsi = {
 		}
 
 	},
-	
+
 	/**
 	 * Checks for mission data and does an http request
 	 *
@@ -261,7 +264,7 @@ var auvsi = {
 	 * @emit mission config JSON data.
 	 */
 	get_mission_data: function(cookie) {
-		
+
 		var request = http.request({
 			method: 'GET',
 			path: auvsi.connection.api_path_missions,
@@ -319,9 +322,9 @@ var auvsi = {
 
 				auvsi.get_server_info(auvsi.get_cookie());
 				auvsi.get_obstacles(auvsi.get_cookie());
-				
+
 				if(config.get_config('auvsi').admin) {
-				    auvsi.get_mission_data(auvsi.get_cookie());
+						auvsi.get_mission_data(auvsi.get_cookie());
 				}
 
 				clearTimeout(auvsi.connection.timeout);
@@ -424,7 +427,7 @@ var auvsi = {
 	 * Subscribe function to event with event_key
 	 */
 	on: function(event_key, callback) {
-		
+
 		if(!auvsi.callbacks[event_key]) {
 			auvsi.callbacks[event_key] = [];
 		}
