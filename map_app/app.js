@@ -1,4 +1,3 @@
-
 /**
  ***************************** CNU Imprint *******************************
  *                                                                       *
@@ -16,7 +15,25 @@
  */
 
 
-var preflight = require('../preflightinfo.json');
+var preflight = {
+        "flight_boundaries": [{"longitude":38.1462694444, "latitude":-76.4281638889},
+                              {"longitude":38.151625,     "latitude":-76.4286833333},
+                              {"longitude":38.1518888889, "latitude":-76.4314666667},
+                              {"longitude":38.1505944444, "latitude":-76.4353611111},
+                              {"longitude":38.1475666667, "latitude":-76.4323416667},
+                              {"longitude":38.1446666667, "latitude":-76.4329472222},
+                              {"longitude":38.1432555556, "latitude":-76.4347666667},
+                              {"longitude":38.1404638889, "latitude":-76.4326361111},
+                              {"longitude":38.1407194444, "latitude":-76.4260138889},
+                              {"longitude":38.1437611111, "latitude":-76.4212055556},
+                              {"longitude":38.1473472222, "latitude":-76.4232111111},
+                              {"longitude":38.1461305556, "latitude":-76.4266527778}],
+        "SRIC_Position": {
+                                "longitude":-76.4266013,
+                                "latitude":38.1470837
+                         }
+}
+
 
 //Create the Map from the Open Layers Dependency from OSM.
 map = new OpenLayers.Map("mapdiv");
@@ -74,6 +91,7 @@ map.addLayer(vectorLayer);
 map.addLayer(Obst_Layer);
 map.addLayer(planeLayer); 
 map.addLayer(waypointLayer);
+map.addLayer(preflightLayer);
 
 // Where to position the map (Initially)
 var lonLat = new OpenLayers.LonLat( -76.427991,38.144616 )                     
@@ -116,8 +134,23 @@ function initKeyLocations() {
 			     graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25, graphicZIndex:12 });
 
     preflightLayer.addFeatures(sric);
+    UpdateLayer(preflight);    
+
+    var boundary_array = preflight.flight_boundaries;
+
+    for(var i = 0; i < boundary_array.length-1; i++) {
+	var start_point = new OpenLayers.Geometry.Point(boundary_array[i].longitude, boundary_array[i].latitude);
+	var end_point = new OpenLayers.Geometry.Point(boundary_array[i+1].longitude, boundary_array[i+1].latitude);
+
+	var vector = new OpenLayers.Layer.Vector();
+	vector.addFeatures([new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString([start_point, end_point]))]);
+	map.addLayers([vector]);
+	UpdateLayer(vector);
+    }
     
 }
+
+initKeyLocations();
 
 /**
  * Change the location of the plane marker leaving tracer.
