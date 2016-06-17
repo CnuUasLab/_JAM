@@ -282,7 +282,7 @@ function createStationaryObsticle(lon, lat, height, rad) {
 	   map.getProjectionObject()),
 	       {description: 'Stationary Object'},
 	       {externalGraphic:'map_app/img/cylinder_obst.png',
-               graphicHeight: (rad*2), graphicWidth: (rad*2),
+               graphicHeight: (rad*0.8), graphicWidth: (rad*0.8),
 	       graphicXOffset:-12, graphicYOffset:-25});
 
     planeLayer.addFeatures(obst);
@@ -328,7 +328,7 @@ function createMovingObsticle(lon, lat, size, id) {
                map.getProjectionObject()),
 		   {description: 'Is an Obstacle'},
 		   {externalGraphic:'map_app/img/sphere_obst.png', 
-		    graphicHeight: (size*2), graphicWidth: (size*2), graphicXOffset:-12, graphicYOffset:-25});
+		    graphicHeight: (size*0.8), graphicWidth: (size*0.8), graphicXOffset:-12, graphicYOffset:-25});
     
     // JSON object we use to store obsticle information.
     var ObjectToInsert = {
