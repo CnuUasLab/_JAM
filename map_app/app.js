@@ -134,7 +134,7 @@ function initKeyLocations() {
 			     graphicHeight: 30, graphicWidth: 30, graphicXOffset:-12, graphicYOffset:-25, graphicZIndex:12 });
 
     preflightLayer.addFeatures(sric);
-    UpdateLayer(preflight);    
+    UpdateLayer(null, preflightLayer, [sric]);    
 
     var boundary_array = preflight.flight_boundaries;
 
@@ -143,9 +143,10 @@ function initKeyLocations() {
 	var end_point = new OpenLayers.Geometry.Point(boundary_array[i+1].longitude, boundary_array[i+1].latitude);
 
 	var vector = new OpenLayers.Layer.Vector();
-	vector.addFeatures([new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString([start_point, end_point]))]);
+	var vec = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString([start_point, end_point]))]
+	vector.addFeatures(vec);
 	map.addLayers([vector]);
-	UpdateLayer(vector);
+	UpdateLayer(null, vector, vec);
     }
     
 }
