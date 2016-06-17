@@ -1,5 +1,4 @@
 .DS_Store
 node_modules
 map_app/tiles
-*sublime-*
-python-backup/
+*sublime-*o
