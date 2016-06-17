@@ -213,6 +213,7 @@ var auvsi = {
 		if(mavlink.is_received_message()) {
 			if(auvsi.get_cookie == null) {
 				utils.log('ERR POST AUVSI TELEMTRY: No cookie');
+				return;
 			}
 
 			// establish http connection to the auvsi uas server
